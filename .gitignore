@@ -1,0 +1,11 @@
+node_modules/
+dist/
+.env
+*.local
+
+# TypeScript build info
+*.tsbuildinfo
+
+# OS
+.DS_Store
+Thumbs.db

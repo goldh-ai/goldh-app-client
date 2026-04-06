@@ -1,0 +1,103 @@
+import { AppLayout } from "@/components/AppLayout";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Calendar, BookOpen, TrendingUp, ArrowRight, Lightbulb, Zap, Waves } from "lucide-react";
+import { useLocation } from "wouter";
+
+const features = [
+  {
+    icon: TrendingUp,
+    title: "GOLDH Pulse",
+    shortDescription: "See the full market picture at a glance. See everything, understand instantly, and act confidently.",
+    fullDescription: "Your single source of truth — a unified dashboard showing real-time updates for crypto, stocks, commodities, and forex.",
+    route: "/features/pulse"
+  },
+  {
+    icon: BookOpen,
+    title: "Guru Talk",
+    shortDescription: "Actionable trade ideas and market calls.",
+    fullDescription: "Structured buy/sell/hold recommendations from leading institutional gurus.",
+    route: "/features/guru-talk"
+  },
+  {
+    icon: Zap,
+    title: "Catalyst Intelligence",
+    shortDescription: "High-impact economic and policy events with real-time volatility AI.",
+    fullDescription: "Proprietary intelligence engine that forecasts market reaction to key macro triggers.",
+    route: "/features/catalyst"
+  },
+  {
+    icon: Waves,
+    title: "Whale Watch",
+    shortDescription: "On-chain flow intelligence showing institutional movement.",
+    fullDescription: "Track massive wallet shifts and netflow spikes across major networks.",
+    route: "/features/whale"
+  },
+  {
+    icon: TrendingUp,
+    title: "STREETScore",
+    shortDescription: "Institutional analyst consensus and bias monitoring engine.",
+    fullDescription: "Real-time grading and signal monitoring across hundreds of global tickers.",
+    route: "/features/streetscore"
+  }
+];
+
+export default function Features() {
+  const [, setLocation] = useLocation();
+
+  return (
+    <AppLayout title="Features">
+      <div className="pb-20 px-6 pt-6">
+        <div className="container mx-auto max-w-6xl">
+          <div className="text-center mb-12 space-y-3">
+            <h1 className="text-5xl font-bold bg-gradient-to-r from-primary via-[#d5c28f] to-primary bg-clip-text text-transparent">
+              Platform Features
+            </h1>
+            <p className="text-muted-foreground text-lg max-w-2xl mx-auto">
+              Comprehensive tools designed to give you the crypto intelligence edge
+            </p>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
+            {features.map((feature, index) => {
+              const Icon = feature.icon;
+              return (
+                <Card
+                  key={index}
+                  className="hover:scale-105 active-elevate-2 transition-all duration-300 group hover:shadow-2xl hover:shadow-primary/30 border-border hover:border-primary/60 cursor-pointer relative overflow-hidden"
+                  data-testid={`card-feature-${index}`}
+                  onClick={() => setLocation(feature.route)}
+                >
+                  <div className="absolute inset-0 bg-gradient-to-br from-primary/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+
+                  <CardHeader className="space-y-4 relative z-10">
+                    <div className="w-14 h-14 rounded-lg bg-gradient-to-br from-primary/20 to-primary/5 border-2 border-primary/30 flex items-center justify-center group-hover:border-primary group-hover:shadow-lg group-hover:shadow-primary/50 transition-all duration-300">
+                      <Icon className="w-7 h-7 text-primary group-hover:scale-110 transition-transform duration-300" />
+                    </div>
+                    <CardTitle className="text-xl group-hover:text-primary transition-colors duration-300">
+                      {feature.title}
+                    </CardTitle>
+                  </CardHeader>
+                  <CardContent className="relative z-10 space-y-4">
+                    <CardDescription className="text-base leading-relaxed">
+                      {feature.shortDescription}
+                    </CardDescription>
+                    <Button
+                      variant="ghost"
+                      className="w-full group-hover:bg-primary/10 group-hover:text-primary transition-all"
+                      data-testid={`button-view-feature-${index}`}
+                    >
+                      Full View
+                      <ArrowRight className="ml-2 h-4 w-4 group-hover:translate-x-1 transition-transform" />
+                    </Button>
+                  </CardContent>
+                </Card>
+              );
+            })}
+          </div>
+        </div>
+      </div>
+
+    </AppLayout>
+  );
+}
