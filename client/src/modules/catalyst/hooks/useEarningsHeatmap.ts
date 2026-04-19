@@ -1,4 +1,5 @@
 import { useQuery } from '@tanstack/react-query';
+import { apiUrl } from '@/lib/queryClient';
 
 export interface EarningsHeatmapRow {
     week_start: string;
@@ -20,7 +21,7 @@ export function useEarningsHeatmap() {
         queryFn: async () => {
             const sessionId = localStorage.getItem('sessionId');
             const headers: Record<string, string> = sessionId ? { Authorization: `Bearer ${sessionId}` } : {};
-            const res = await fetch('/api/catalyst/earnings_heatmap', { headers, credentials: 'include' });
+            const res = await fetch(apiUrl('/api/catalyst/earnings_heatmap'), { headers, credentials: 'include' });
             if (!res.ok) throw new Error(`Failed to fetch earnings heatmap: ${res.status}`);
             return res.json();
         },

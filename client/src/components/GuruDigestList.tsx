@@ -4,6 +4,7 @@ import { Button } from "@/components/ui/button";
 import { ExternalLink, Loader2, TrendingUp, ArrowRight } from "lucide-react";
 import { formatDistanceToNow } from "date-fns";
 import { useLocation } from "wouter";
+import { apiUrl, getSessionAuthHeaders } from "@/lib/queryClient";
 
 interface DigestEntry {
   title: string;
@@ -23,7 +24,10 @@ export default function GuruDigestList({ showAll = false, truncateSummary = fals
   const [, setLocation] = useLocation();
 
   useEffect(() => {
-    fetch(`${window.location.origin}/api/news/guru-digest`)
+    fetch(apiUrl("/api/news/guru-digest"), {
+      headers: getSessionAuthHeaders(),
+      credentials: "include",
+    })
       .then(res => {
         if (!res.ok) throw new Error(`HTTP ${res.status}`);
         return res.json();

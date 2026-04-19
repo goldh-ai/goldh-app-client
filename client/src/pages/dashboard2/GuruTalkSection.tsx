@@ -13,6 +13,7 @@ import { Link } from 'wouter';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Badge } from '@/components/ui/badge';
 import { cn } from '@/lib/utils';
+import { apiUrl } from '@/lib/queryClient';
 import type { GuruInsight } from '@shared/types';
 
 interface Props {
@@ -95,7 +96,7 @@ export function GuruTalkSection({ isFree }: Props) {
     const { data: guruData, isLoading } = useQuery<{ items: GuruInsight[]; lastDocId?: string }>({
         queryKey: ['guru-talk-preview'],
         queryFn: async () => {
-            const res = await fetch('/api/news/guru-talk?limit=100&skipSort=true', {
+            const res = await fetch(apiUrl('/api/news/guru-talk?limit=100&skipSort=true'), {
                 headers: getAuthHeaders(),
                 credentials: 'include',
             });

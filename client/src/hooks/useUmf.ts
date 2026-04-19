@@ -19,7 +19,7 @@
  */
 
 import { useQuery } from "@tanstack/react-query";
-import { apiUrl } from "@/lib/queryClient";
+import { apiUrl, getSessionAuthHeaders } from "@/lib/queryClient";
 import type { UmfSnapshotLive, UmfAssetLive } from "@shared/types";
 
 /**
@@ -79,7 +79,10 @@ export function useUmfSnapshot() {
   return useQuery<UmfSnapshotExtended, Error>({
     queryKey: ['/api/umf/snapshot'],
     queryFn: async () => {
-      const response = await fetch(apiUrl('/api/umf/snapshot'));
+      const response = await fetch(apiUrl('/api/umf/snapshot'), {
+        headers: getSessionAuthHeaders(),
+        credentials: 'include',
+      });
       if (!response.ok) {
         throw new Error('Failed to fetch snapshot');
       }
@@ -161,7 +164,10 @@ export function useUmfMovers() {
   return useQuery<UmfMoversExtended, Error>({
     queryKey: ['/api/umf/movers'],
     queryFn: async () => {
-      const response = await fetch(apiUrl('/api/umf/movers'));
+      const response = await fetch(apiUrl('/api/umf/movers'), {
+        headers: getSessionAuthHeaders(),
+        credentials: 'include',
+      });
       if (!response.ok) {
         throw new Error('Failed to fetch movers');
       }

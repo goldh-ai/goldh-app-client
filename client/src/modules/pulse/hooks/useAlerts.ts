@@ -1,5 +1,6 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import type { PulseAlert, CreatePulseAlertInput, UpdatePulseAlertInput } from '@shared/types';
+import { apiUrl } from '@/lib/queryClient';
 
 const ALERTS_KEY = ['/api/pulse/alerts'] as const;
 
@@ -13,7 +14,7 @@ export function useAlerts() {
   return useQuery<PulseAlert[]>({
     queryKey: ALERTS_KEY,
     queryFn: async () => {
-      const res = await fetch('/api/pulse/alerts', {
+      const res = await fetch(apiUrl('/api/pulse/alerts'), {
         headers: getAuthHeaders(),
         credentials: 'include',
       });
@@ -33,7 +34,7 @@ export function useCreateAlert() {
   const qc = useQueryClient();
   return useMutation({
     mutationFn: async (data: CreatePulseAlertInput) => {
-      const res = await fetch('/api/pulse/alerts', {
+      const res = await fetch(apiUrl('/api/pulse/alerts'), {
         method: 'POST',
         headers: { 'Content-Type': 'application/json', ...getAuthHeaders() },
         credentials: 'include',
@@ -54,7 +55,7 @@ export function useUpdateAlert() {
   const qc = useQueryClient();
   return useMutation({
     mutationFn: async ({ id, data }: { id: string; data: UpdatePulseAlertInput }) => {
-      const res = await fetch(`/api/pulse/alerts/${id}`, {
+      const res = await fetch(apiUrl(`/api/pulse/alerts/${id}`), {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json', ...getAuthHeaders() },
         credentials: 'include',
@@ -75,7 +76,7 @@ export function useDeleteAlert() {
   const qc = useQueryClient();
   return useMutation({
     mutationFn: async (id: string) => {
-      const res = await fetch(`/api/pulse/alerts/${id}`, {
+      const res = await fetch(apiUrl(`/api/pulse/alerts/${id}`), {
         method: 'DELETE',
         headers: getAuthHeaders(),
         credentials: 'include',

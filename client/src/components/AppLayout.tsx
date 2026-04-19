@@ -9,6 +9,7 @@ import {
     Briefcase,
     LineChart,
     MessageSquare,
+    ArrowRightLeft,
     Sparkles,
     BookOpen,
     User,
@@ -47,6 +48,7 @@ const featuresItems = [
     { name: "Catalyst Intelligence", icon: Zap, path: "/features/catalyst" },
     { name: "Whale Watch", icon: Waves, path: "/features/whale" },
     { name: "STREETScore", icon: BarChart3, path: "/features/streetscore" },
+    { name: "Arbitrage Scanner", icon: ArrowRightLeft, path: "/features/arbitrage" },
 ];
 
 const intelligenceHubItems = [
@@ -76,6 +78,7 @@ const pathLabels: Record<string, string> = {
     "/features/whale": "Whale Watch",
     "/features/guru-talk": "Guru Talk",
     "/features/streetscore": "STREETScore",
+    "/features/arbitrage": "Arbitrage Scanner",
     "/intelligence-hub": "Intelligence Hub",
     "/portfolio-intelligence": "Portfolio Intelligence",
     "/insights": "CIO Insights",
@@ -326,7 +329,7 @@ function SidebarContent({
                                 {!collapsed && <span className="text-sm font-medium">Admin</span>}
                             </div>
                         </Link>
-                        
+
                         <Link href="/wiki" onClick={onNavClick}>
                             <div
                                 className={cn(
@@ -469,7 +472,7 @@ export const AppLayout: React.FC<AppLayoutProps> = ({ children, title }) => {
 
         const handleScroll = () => {
             const currentScrollY = container.scrollTop;
-            
+
             // Scroll down: hide. Scroll up: show.
             // Minimum threshold of 10px to avoid flickering
             if (Math.abs(currentScrollY - lastScrollY.current) < 10) return;
@@ -569,31 +572,31 @@ export const AppLayout: React.FC<AppLayoutProps> = ({ children, title }) => {
 
                             <div className="hidden lg:block h-4 w-px bg-[#1a1a1a]" />
 
-                        {/* Avatar or Login Button */}
-                        {user ? (
-                            <Link href="/profile">
-                                <div className="w-7 h-7 rounded-full bg-gradient-to-tr from-[#C7AE6A] to-[#E5D5A5] flex items-center justify-center shrink-0 cursor-pointer hover:opacity-80 transition-opacity">
-                                    <span className="text-[10px] font-black text-black">{userInitial}</span>
-                                </div>
-                            </Link>
-                        ) : (
-                            <Link href="/signin">
-                                <Button
-                                    variant="outline"
-                                    size="sm"
-                                    className="h-8 border-[#C7AE6A]/30 text-[#C7AE6A] hover:bg-[#C7AE6A]/10 text-xs font-bold uppercase tracking-widest"
-                                >
-                                    Login
-                                </Button>
-                            </Link>
-                        )}
+                            {/* Avatar or Login Button */}
+                            {user ? (
+                                <Link href="/profile">
+                                    <div className="w-7 h-7 rounded-full bg-gradient-to-tr from-[#C7AE6A] to-[#E5D5A5] flex items-center justify-center shrink-0 cursor-pointer hover:opacity-80 transition-opacity">
+                                        <span className="text-[10px] font-black text-black">{userInitial}</span>
+                                    </div>
+                                </Link>
+                            ) : (
+                                <Link href="/signin">
+                                    <Button
+                                        variant="outline"
+                                        size="sm"
+                                        className="h-8 border-[#C7AE6A]/30 text-[#C7AE6A] hover:bg-[#C7AE6A]/10 text-xs font-bold uppercase tracking-widest"
+                                    >
+                                        Login
+                                    </Button>
+                                </Link>
+                            )}
                         </div>
                     </header>
 
                     {/* Content Area */}
-                    <div 
+                    <div
                         ref={scrollRef}
-                        className="flex-1 overflow-y-auto custom-scrollbar bg-[#050505] lg:pb-0 pb-16"
+                        className="flex min-h-0 flex-1 flex-col overflow-y-auto custom-scrollbar bg-[#050505] lg:pb-0 pb-16"
                     >
                         {children}
                     </div>

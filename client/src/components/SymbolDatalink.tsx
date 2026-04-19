@@ -17,6 +17,7 @@ import {
     BookOpen
 } from "lucide-react";
 import { PortfolioHistory } from "@shared/types";
+import { apiUrl, getSessionAuthHeaders } from "@/lib/queryClient";
 
 interface SymbolDatalinkProps {
     ticker: string | null;
@@ -49,7 +50,10 @@ export function SymbolDatalink({
 
         setActiveTab("insights");
         setContentLoading(true);
-        fetch(`/api/content/by-symbol/${ticker}`)
+        fetch(apiUrl(`/api/content/by-symbol/${ticker}`), {
+            headers: getSessionAuthHeaders(),
+            credentials: "include",
+        })
             .then(res => res.ok ? res.json() : [])
             .then(data => setContentInsights(data))
             .catch(() => setContentInsights([]))

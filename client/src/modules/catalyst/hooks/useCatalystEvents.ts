@@ -6,6 +6,7 @@
  */
 
 import { useQuery } from '@tanstack/react-query';
+import { apiUrl } from '@/lib/queryClient';
 import type { CatalystEvent } from '../types';
 
 interface CatalystFilters {
@@ -43,7 +44,7 @@ export function useCatalystEvents(filters?: CatalystFilters) {
         queryFn: async () => {
             const sessionId = localStorage.getItem('sessionId');
             const headers: Record<string, string> = sessionId ? { Authorization: `Bearer ${sessionId}` } : {};
-            const res = await fetch(`/api/catalyst/feed${qs}`, { headers, credentials: 'include' });
+            const res = await fetch(apiUrl(`/api/catalyst/feed${qs}`), { headers, credentials: 'include' });
             if (!res.ok) {
                 throw new Error(`Failed to fetch catalyst events: ${res.status}`);
             }

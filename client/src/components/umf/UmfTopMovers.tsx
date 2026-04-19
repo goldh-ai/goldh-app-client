@@ -266,6 +266,8 @@ function MoverDetailSheet({ mover, open, onOpenChange }: MoverDetailSheetProps) 
     forex: 'Forex',
     commodity: 'Commodity',
     etf: 'ETF',
+    bond: 'Bond',
+    equity: 'Equity',
   }[mover.class];
 
   // Format last update time

@@ -38,6 +38,7 @@ import PulseAssetDetailPage from "@/modules/pulse/PulseAssetDetailPage";
 import CatalystFeed from "@/modules/catalyst/pages/CatalystFeed";
 import WhaleWatchPage from "@/modules/whale/WhaleWatchPage";
 import STREETScorePage from "@/modules/streetscore/pages/STREETScorePage";
+import ArbitrageScannerPage from "@/modules/arbitrage/pages/ArbitrageScannerPage";
 
 import NotFound from "@/pages/not-found";
 
@@ -143,6 +144,13 @@ function Router() {
       <Route path="/features/streetscore">
         <ProtectedRoute mode="prompt">
           <STREETScorePage />
+        </ProtectedRoute>
+      </Route>
+
+      {/* Arbitrage Scanner (Module 8) */}
+      <Route path="/features/arbitrage">
+        <ProtectedRoute mode="prompt">
+          <ArbitrageScannerPage />
         </ProtectedRoute>
       </Route>
 

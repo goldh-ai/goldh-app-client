@@ -1,23 +1,15 @@
-/**
- * shared/types.ts — Browser-safe type re-exports
- *
- * This file acts as the primary entry point for the UI/Client to consume
- * shared Zod schemas and TypeScript types.
- *
- * NOTE: In the 'goldh-app-client' repo, this file imports from ./schema (which
- * is a shim re-exporting from ./contracts).
- */
+/** Browser-safe type re-exports — UI entry point for shared Zod schemas and types. */
 
 // ─── Core ───────────────────────────────────────────────────────────────────
 
-export { planTierSchema } from './schema';
-export type { PlanTier } from './schema';
+export { planTierSchema } from "./schema";
+export type { PlanTier } from "./schema";
 
-export type { RegistryAsset, RegistryData } from './schema';
-export type { NewsArticle, LearningTopic } from './schema';
+export type { RegistryAsset, RegistryData } from "./schema";
+export type { NewsArticle, LearningTopic } from "./schema";
 
-export { signUpSchema } from './schema';
-export type { SignUpData } from './schema';
+export { signUpSchema } from "./schema";
+export type { SignUpData } from "./schema";
 
 // ─── UMF (Universal Market Financials) ──────────────────────────────────────
 
@@ -28,7 +20,7 @@ export {
   umfMoversLiveSchema,
   umfBriefSchema,
   umfAlertSchema,
-} from './schema';
+} from "./schema";
 
 export type {
   UmfAsset,
@@ -40,43 +32,48 @@ export type {
   UmfSnapshotLive,
   UmfMoversLive,
   UmfAssetClass,
-} from './schema';
+} from "./schema";
 
 // ─── Economic Calendar ────────────────────────────────────────────────────────
 
-export { econEventSchema } from './schema';
-export type { EconEvent } from './schema';
+export { econEventSchema } from "./schema";
+export type { EconEvent } from "./schema";
 
 // ─── Asset / Portfolio ────────────────────────────────────────────────────────
 
-export type { AssetOverview } from './schema';
+export type { AssetOverview } from "./schema";
 export type {
   PortfolioIntelligenceItem,
   PortfolioHistory,
   PortfolioIntelligence,
   PortfolioIntelligenceHistory,
-} from './schema';
+} from "./schema";
 
 // ─── Content / Guru ───────────────────────────────────────────────────────────
 
-export type { ContentItem } from './schema';
-export type { Guru, GuruInsight } from './schema';
+export type { ContentItem } from "./schema";
+export type { Guru, GuruInsight } from "./schema";
 
 // ─── Pulse ────────────────────────────────────────────────────────────────────
 
-export { pulseAssetClassEnum, pulseProviderNameEnum } from './schema';
-export type { PulseAssetClass, PulseProviderName } from './schema';
-export type { PulseRegistryEntry } from './schema';
+export { pulseAssetClassEnum, pulseProviderNameEnum } from "./schema";
+export type { PulseAssetClass, PulseProviderName } from "./schema";
+export type { PulseRegistryEntry } from "./schema";
 
-export { createPulseAlertSchema, updatePulseAlertSchema, alertEvaluationResultSchema } from './schema';
+export {
+  createPulseAlertSchema,
+  updatePulseAlertSchema,
+  alertEvaluationResultSchema,
+  pulseAlertSchema,
+} from "./schema";
 export type {
   PulseAlert,
   CreatePulseAlertInput,
   UpdatePulseAlertInput,
   AlertEvaluationResult,
-} from './schema';
+} from "./schema";
 
-export type { MorningBrief, MorningBriefTopMover } from './schema';
+export type { MorningBrief, MorningBriefTopMover } from "./schema";
 
 // ─── Catalyst ─────────────────────────────────────────────────────────────────
 
@@ -86,10 +83,39 @@ export type {
   EarningsEvent,
   CatalystEvent,
   EarningsHeatmapRow,
-} from './schema';
+} from "./schema";
 
-export { earningsHeatmapRowSchema } from './schema';
+export { earningsHeatmapRowSchema } from "./schema";
+
+// ─── Arbitrage Scanner (Module 8) ───────────────────────────────────────────
+
+export {
+  arbitrageOpportunitySchema,
+  arbitrageOpportunitiesResponseSchema,
+  arbitrageOpportunitiesApiResponseSchema,
+  arbitrageOpportunityApiDtoSchema,
+  arbitrageOpportunitiesApiMetaSchema,
+  arbitrageOpportunitiesApiPaginationSchema,
+  arbitrageSortByApiSchema,
+  arbitrageFreshnessSchema,
+  arbitrageGradeSchema,
+  arbitrageConfidenceBandSchema,
+  arbitrageExecutionComplexitySchema,
+  arbitrageSignalStateSchema,
+  mapArbitrageOpportunityFromApiDto,
+} from "./schema";
+
+export type {
+  ArbitrageOpportunity,
+  ArbitrageOpportunitiesResponse,
+  ArbitrageOpportunitiesApiResponse,
+  ArbitrageOpportunityApiDto,
+  ArbitrageSortByApi,
+  ArbitrageFreshness,
+  ArbitrageGrade,
+  ArbitrageConfidenceBand,
+  ArbitrageExecutionComplexity,
+  ArbitrageSignalState,
+} from "./schema";
 
 // ─── Whale Watch ──────────────────────────────────────────────────────────────
-// Whale types are defined in client/src/modules/whale/types.ts — not imported
-// from @shared directly by any client file.

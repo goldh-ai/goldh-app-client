@@ -9,6 +9,7 @@ import { Label } from "@/components/ui/label";
 import { Loader2, CheckCircle2, XCircle, Eye, EyeOff, Lock } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { Header } from "@/components/Header";
+import { apiUrl } from "@/lib/queryClient";
 
 export default function VerifyEmail() {
     const [, setLocation] = useLocation();
@@ -117,7 +118,7 @@ export default function VerifyEmail() {
                 await user.reload();
                 const idToken = await getIdToken(user, true);
 
-                const res = await fetch("/api/auth/verify", {
+                const res = await fetch(apiUrl("/api/auth/verify"), {
                     method: "POST",
                     headers: { "Content-Type": "application/json" },
                     body: JSON.stringify({ firebaseIdToken: idToken })

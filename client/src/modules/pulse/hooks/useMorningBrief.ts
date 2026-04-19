@@ -1,8 +1,12 @@
 import { useQuery } from '@tanstack/react-query';
 import type { MorningBrief } from '@shared/types';
+import { apiUrl, getSessionAuthHeaders } from '@/lib/queryClient';
 
 async function fetchMorningBrief(): Promise<MorningBrief | null> {
-  const res = await fetch('/api/pulse/morningbrief');
+  const res = await fetch(apiUrl('/api/pulse/morningbrief'), {
+    headers: getSessionAuthHeaders(),
+    credentials: 'include',
+  });
   if (res.status === 503) return null; // not yet generated
   if (!res.ok) throw new Error(`Morning brief fetch failed: ${res.status}`);
   return res.json();

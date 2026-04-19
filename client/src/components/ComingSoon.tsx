@@ -6,7 +6,6 @@ import {
   Bell,
   Code,
   Gift,
-  Zap,
   BarChart3
 } from "lucide-react";
 
@@ -20,11 +19,6 @@ const comingSoonFeatures = [
     icon: Brain,
     title: "Yield Finder",
     description: "Finds and scores the safest, highest-yielding staking or DeFi opportunities by risk and reliability."
-  },
-  {
-    icon: Zap,
-    title: "Arbitrage Scanner",
-    description: "Scans global exchanges for price differences on the same asset and alerts in real time."
   },
   {
     icon: FileText,
@@ -77,7 +71,7 @@ export function ComingSoon() {
               >
                 <CardHeader>
                   <div className="flex items-center gap-3 mb-2">
-                    <div 
+                    <div
                       className="w-12 h-12 rounded-lg bg-gradient-to-br from-[#C7AE6A]/20 to-[#C7AE6A]/5 border border-[#C7AE6A]/30 flex items-center justify-center"
                     >
                       <Icon className="w-6 h-6 text-[#C7AE6A]" />
@@ -98,8 +92,8 @@ export function ComingSoon() {
         <div className="mt-12 text-center">
           <p className="text-lg text-muted-foreground">
             Want early access?{" "}
-            <a 
-              href="/signup" 
+            <a
+              href="/signup"
               className="text-[#C7AE6A] hover:underline font-semibold"
               data-testid="link-early-access"
             >

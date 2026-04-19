@@ -1,4 +1,5 @@
 import { useQuery } from '@tanstack/react-query';
+import { apiUrl } from '@/lib/queryClient';
 import type { StreetScoreEvent } from '../types';
 
 function getAuthHeaders(): Record<string, string> {
@@ -10,7 +11,7 @@ export function useSTREETScoreTicker(ticker: string | null | undefined) {
   return useQuery<StreetScoreEvent | null>({
     queryKey: ['streetscore-ticker', ticker],
     queryFn: () =>
-      fetch(`/api/score/${encodeURIComponent(ticker!)}`, {
+      fetch(apiUrl(`/api/score/${encodeURIComponent(ticker!)}`), {
         headers: getAuthHeaders(),
         credentials: 'include',
       }).then(async r => {

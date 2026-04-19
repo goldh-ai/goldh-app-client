@@ -1,4 +1,5 @@
 import { useQuery } from '@tanstack/react-query';
+import { apiUrl } from '@/lib/queryClient';
 import type { StreetUniverseEntry } from '../types';
 
 function getAuthHeaders(): Record<string, string> {
@@ -36,7 +37,7 @@ export function useSTREETScoreUniverse(params: UniverseParams = {}) {
   return useQuery<UniverseResponse>({
     queryKey: ['streetscore-universe', params],
     queryFn: () =>
-      fetch(`/api/score/universe?${qs.toString()}`, {
+      fetch(apiUrl(`/api/score/universe?${qs.toString()}`), {
         headers: getAuthHeaders(),
         credentials: 'include',
       }).then(async r => {

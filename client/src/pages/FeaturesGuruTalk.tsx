@@ -19,6 +19,7 @@ import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from "@/co
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { PageHeader } from "@/components/shared/PageHeader";
 import { ActiveFilterChips, FilterChip } from "@/components/shared/ActiveFilterChips";
+import { apiUrl, getSessionAuthHeaders } from "@/lib/queryClient";
 
 const THEME_TAGS = ["AI", "Rates", "Inflation", "Bitcoin", "Earnings", "Regulation", "Geopolitics", "Technology", "Macro", "Energy"];
 
@@ -44,7 +45,10 @@ export default function FeaturesGuruTalk() {
     const { data: gurus } = useQuery<any[]>({
         queryKey: ["/api/news/gurus"],
         queryFn: async () => {
-            const res = await fetch("/api/news/gurus");
+            const res = await fetch(apiUrl("/api/news/gurus"), {
+                headers: getSessionAuthHeaders(),
+                credentials: "include",
+            });
             if (!res.ok) throw new Error("Failed to fetch gurus");
             return res.json();
         }
@@ -67,7 +71,10 @@ export default function FeaturesGuruTalk() {
             params.append("limit", "100");
             params.append("skipSort", "true");
 
-            const res = await fetch(`/api/news/guru-talk?${params.toString()}`);
+            const res = await fetch(apiUrl(`/api/news/guru-talk?${params.toString()}`), {
+                headers: getSessionAuthHeaders(),
+                credentials: "include",
+            });
             if (!res.ok) throw new Error("Failed to fetch insights");
             return res.json();
         }
@@ -401,7 +408,7 @@ export default function FeaturesGuruTalk() {
                                     <div className="flex gap-4 overflow-x-auto pb-6 px-2 no-scrollbar snap-x snap-mandatory touch-pan-x">
                                         {guruInsights.map((insight) => (
                                             <div key={insight.insightId} className="flex-none w-[85vw] max-w-[320px] snap-start">
-                                                <InsightCard insight={insight} />
+                                                <InsightCard insight={insight} tier={tier} />
                                             </div>
                                         ))}
                                     </div>
@@ -412,7 +419,7 @@ export default function FeaturesGuruTalk() {
                         {/* Desktop: Grid Layout */}
                         <div className="hidden md:grid grid-cols-2 lg:grid-cols-3 gap-6 animate-in fade-in duration-700">
                             {insights.map((insight) => (
-                                <InsightCard key={insight.insightId} insight={insight} />
+                                <InsightCard key={insight.insightId} insight={insight} tier={tier} />
                             ))}
                         </div>
                     </>
@@ -442,7 +449,7 @@ export default function FeaturesGuruTalk() {
     );
 }
 
-function InsightCard({ insight }: { insight: GuruInsight }) {
+function InsightCard({ insight, tier }: { insight: GuruInsight; tier: string }) {
     return (
         <Card className="bg-[#1a1a1a] border-border hover:border-primary/30 hover:shadow-[0_0_30px_var(--primary-foreground)] transition-all duration-300 group overflow-hidden flex flex-col h-full rounded-2xl">
             <div className="h-1 w-full bg-gradient-to-r from-transparent via-primary/50 to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />

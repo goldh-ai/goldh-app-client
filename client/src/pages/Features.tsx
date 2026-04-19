@@ -1,7 +1,7 @@
 import { AppLayout } from "@/components/AppLayout";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Calendar, BookOpen, TrendingUp, ArrowRight, Lightbulb, Zap, Waves } from "lucide-react";
+import { BookOpen, TrendingUp, ArrowRight, Zap, Waves, ArrowRightLeft } from "lucide-react";
 import { useLocation } from "wouter";
 
 const features = [
@@ -39,6 +39,13 @@ const features = [
     shortDescription: "Institutional analyst consensus and bias monitoring engine.",
     fullDescription: "Real-time grading and signal monitoring across hundreds of global tickers.",
     route: "/features/streetscore"
+  },
+  {
+    icon: ArrowRightLeft,
+    title: "Arbitrage Scanner",
+    shortDescription: "Cross-exchange spreads, scored opportunities, and execution context.",
+    fullDescription: "Leaderboard-style intelligence for arb signals — Pro and Elite.",
+    route: "/features/arbitrage"
   }
 ];
 
@@ -58,7 +65,7 @@ export default function Features() {
             </p>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
+          <div className="grid grid-cols-1 gap-8 md:grid-cols-2 lg:grid-cols-3">
             {features.map((feature, index) => {
               const Icon = feature.icon;
               return (

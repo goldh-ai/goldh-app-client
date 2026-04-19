@@ -1,4 +1,5 @@
 import { useQuery } from '@tanstack/react-query';
+import { apiUrl } from '@/lib/queryClient';
 
 export type CatalystTriggerType =
     | 'CATALYST_HIGH_IMPACT'
@@ -31,7 +32,7 @@ export function useCatalystTriggers() {
         queryFn: async () => {
             const sessionId = localStorage.getItem('sessionId');
             const headers: Record<string, string> = sessionId ? { Authorization: `Bearer ${sessionId}` } : {};
-            const res = await fetch('/api/catalyst/triggers', { headers, credentials: 'include' });
+            const res = await fetch(apiUrl('/api/catalyst/triggers'), { headers, credentials: 'include' });
             if (!res.ok) throw new Error(`Failed to fetch catalyst triggers: ${res.status}`);
             return res.json();
         },

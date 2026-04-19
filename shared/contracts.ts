@@ -1,30 +1,30 @@
 import { z } from "zod";
 
-/**
- * shared/contracts.ts — Browser-safe API contracts
- * 
- * Contains all Zod schemas and TypeScript interfaces required by the UI.
- * This file is purely standalone and does not import Drizzle ORM.
- * Safe for use in both frontend (client) and backend (server).
- */
+/** Browser-safe API contracts — Zod schemas and TS interfaces for client and server. */
 
 // ─── Enums & Constants ───────────────────────────────────────────────────────
 
-export const planTierSchema = z.enum(['free', 'essential', 'pro', 'elite', 'admin']);
+export const planTierSchema = z.enum([
+  "free",
+  "essential",
+  "pro",
+  "elite",
+  "admin",
+]);
 export type PlanTier = z.infer<typeof planTierSchema>;
 
-export const impactBandSchema = z.enum(['Low', 'Medium', 'High']);
-export type ImpactBand = 'Low' | 'Medium' | 'High';
+export const impactBandSchema = z.enum(["Low", "Medium", "High"]);
+export type ImpactBand = "Low" | "Medium" | "High";
 
-export const biasSchema = z.enum(['Risk-On', 'Risk-Off', 'Neutral']);
-export type Bias = 'Risk-On' | 'Risk-Off' | 'Neutral';
+export const biasSchema = z.enum(["Risk-On", "Risk-Off", "Neutral"]);
+export type Bias = "Risk-On" | "Risk-Off" | "Neutral";
 
 // ─── Core Interfaces ─────────────────────────────────────────────────────────
 
 export interface RegistryAsset {
   symbol: string;
   name: string;
-  class: 'index' | 'equity' | 'commodity' | 'forex' | 'etf' | 'bond';
+  class: "index" | "equity" | "commodity" | "forex" | "etf" | "bond";
   yahooTicker: string;
   eodhdTicker: string | null;
   description?: string;
@@ -43,18 +43,20 @@ export interface RegistryData {
 
 // ─── Auth ───────────────────────────────────────────────────────────────────
 
-export const signUpSchema = z.object({
-  name: z.string().optional(),
-  email: z.string().email(),
-  password: z.string().min(6),
-  confirmPassword: z.string(),
-  phone: z.string().optional(),
-  experienceLevel: z.string().optional(),
-  agreeToUpdates: z.boolean().optional().default(false),
-}).refine((data) => data.password === data.confirmPassword, {
-  message: "Passwords don't match",
-  path: ["confirmPassword"],
-});
+export const signUpSchema = z
+  .object({
+    name: z.string().optional(),
+    email: z.string().email(),
+    password: z.string().min(6),
+    confirmPassword: z.string(),
+    phone: z.string().optional(),
+    experienceLevel: z.string().optional(),
+    agreeToUpdates: z.boolean().optional().default(false),
+  })
+  .refine((data) => data.password === data.confirmPassword, {
+    message: "Passwords don't match",
+    path: ["confirmPassword"],
+  });
 
 export type SignUpData = z.infer<typeof signUpSchema>;
 
@@ -84,42 +86,61 @@ export interface LearningTopic {
 
 // ─── Economic Calendar ──────────────────────────────────────────────────────
 
-export const econEventSchema = z.preprocess((val: any) => {
-  if (!val || typeof val !== 'object') return val;
-  const date = val.date || val.datetime_utc;
-  let impact = val.impact || "Medium";
-  if (typeof impact === 'string' && !["Low", "Medium", "High", "Holiday"].includes(impact)) {
-    const lowerImpact = impact.toLowerCase();
-    if (lowerImpact.includes("high")) impact = "High";
-    else if (lowerImpact.includes("low")) impact = "Low";
-    else if (lowerImpact.includes("holiday") || lowerImpact.includes("bank")) impact = "Holiday";
-    else impact = "Medium";
-  }
-  const country = val.country || "Global";
-  return {
-    ...val,
-    date,
-    impact,
-    country,
-    forecast: (val.forecast !== undefined && val.forecast !== null) ? String(val.forecast) : "",
-    previous: (val.previous !== undefined && val.previous !== null) ? String(val.previous) : "",
-  };
-}, z.object({
-  id: z.string().optional().default("unknown"),
-  title: z.string().min(1, "Event title is required"),
-  country: z.string().default("Global"),
-  date: z.string().min(1, "Date is required"),
-  impact: z.enum(["Low", "Medium", "High", "Holiday"]).default("Medium"),
-  forecast: z.string().default(""),
-  previous: z.string().default(""),
-}));
+export const econEventSchema = z.preprocess(
+  (val: any) => {
+    if (!val || typeof val !== "object") return val;
+    const date = val.date || val.datetime_utc;
+    let impact = val.impact || "Medium";
+    if (
+      typeof impact === "string" &&
+      !["Low", "Medium", "High", "Holiday"].includes(impact)
+    ) {
+      const lowerImpact = impact.toLowerCase();
+      if (lowerImpact.includes("high")) impact = "High";
+      else if (lowerImpact.includes("low")) impact = "Low";
+      else if (lowerImpact.includes("holiday") || lowerImpact.includes("bank"))
+        impact = "Holiday";
+      else impact = "Medium";
+    }
+    const country = val.country || "Global";
+    return {
+      ...val,
+      date,
+      impact,
+      country,
+      forecast:
+        val.forecast !== undefined && val.forecast !== null
+          ? String(val.forecast)
+          : "",
+      previous:
+        val.previous !== undefined && val.previous !== null
+          ? String(val.previous)
+          : "",
+    };
+  },
+  z.object({
+    id: z.string().optional().default("unknown"),
+    title: z.string().min(1, "Event title is required"),
+    country: z.string().default("Global"),
+    date: z.string().min(1, "Date is required"),
+    impact: z.enum(["Low", "Medium", "High", "Holiday"]).default("Medium"),
+    forecast: z.string().default(""),
+    previous: z.string().default(""),
+  }),
+);
 
 export type EconEvent = z.infer<typeof econEventSchema>;
 
 // ─── UMF (Universal Market Financials) ──────────────────────────────────────
 
 export const umfAssetClassEnum = z.enum([
-  "crypto", "index", "forex", "commodity", "etf", "equity", "bond"
+  "crypto",
+  "index",
+  "forex",
+  "commodity",
+  "etf",
+  "equity",
+  "bond",
 ]);
 export type UmfAssetClass = z.infer<typeof umfAssetClassEnum>;
 
@@ -149,7 +170,7 @@ export const umfAssetLiveSchema = z.object({
   id: z.string().min(1, "Asset ID is required"),
   symbol: z.string().min(1, "Symbol is required"),
   name: z.string().min(1, "Asset name is required"),
-  class: umfAssetClassEnum.or(z.literal('equity')),
+  class: umfAssetClassEnum.or(z.literal("equity")),
   image: z.string().url().nullable().optional(),
   price: z.number().positive("Price must be positive"),
   changePct24h: z.number().nullable(),
@@ -166,10 +187,13 @@ export const umfAssetLiveSchema = z.object({
 
 export type UmfAssetLive = z.infer<typeof umfAssetLiveSchema>;
 
-export const providerMetaSchema = z.record(z.string(), z.object({
-  lastFetch: z.string().datetime(),
-  degraded: z.boolean().default(false),
-}));
+export const providerMetaSchema = z.record(
+  z.string(),
+  z.object({
+    lastFetch: z.string().datetime(),
+    degraded: z.boolean().default(false),
+  }),
+);
 
 export type ProviderMeta = z.infer<typeof providerMetaSchema>;
 
@@ -231,26 +255,32 @@ export const assetOverviewSchema = z.object({
   name: z.string(),
   class: umfAssetClassEnum,
   image: z.string().url().nullable().optional(),
-  priceSummary: z.object({
-    price: z.number().positive(),
-    changePct24h: z.number(),
-    volume24h: z.number().nonnegative().nullable(),
-    marketCap: z.number().nonnegative().nullable(),
-    updatedAt_utc: z.string().datetime(),
-  }).nullable(),
-  news: z.array(z.object({
-    title: z.string(),
-    summary: z.string(),
-    link: z.string().url(),
-    date: z.string().datetime(),
-  })),
-  events: z.array(z.object({
-    id: z.string(),
-    title: z.string(),
-    datetime_utc: z.string().datetime(),
-    importance: z.enum(["High", "Medium", "Low"]),
-    category: z.string(),
-  })),
+  priceSummary: z
+    .object({
+      price: z.number().positive(),
+      changePct24h: z.number(),
+      volume24h: z.number().nonnegative().nullable(),
+      marketCap: z.number().nonnegative().nullable(),
+      updatedAt_utc: z.string().datetime(),
+    })
+    .nullable(),
+  news: z.array(
+    z.object({
+      title: z.string(),
+      summary: z.string(),
+      link: z.string().url(),
+      date: z.string().datetime(),
+    }),
+  ),
+  events: z.array(
+    z.object({
+      id: z.string(),
+      title: z.string(),
+      datetime_utc: z.string().datetime(),
+      importance: z.enum(["High", "Medium", "Low"]),
+      category: z.string(),
+    }),
+  ),
   degraded: z.object({
     price: z.boolean(),
     news: z.boolean(),
@@ -285,7 +315,10 @@ export interface PortfolioIntelligenceItem extends PortfolioIntelligence {
   snapshotTimestamp_utc: string;
   riskUpdateDate?: string;
   effectiveStopLoss: number;
-  stopPhase: 'capital_protection' | 'profit_protection';
+  stopPhase: "capital_protection" | "profit_protection";
+  highWaterMark?: number;
+  trailingStopPct?: number;
+  closeReason?: string;
 }
 
 export const portfolioIntelligenceHistorySchema = z.object({
@@ -293,12 +326,17 @@ export const portfolioIntelligenceHistorySchema = z.object({
   portfolioId: z.string().min(1),
   status: z.string(),
   stopLoss: z.number().nullable().optional(),
-  changedAt_utc: z.string().datetime().default(() => new Date().toISOString()),
+  changedAt_utc: z
+    .string()
+    .datetime()
+    .default(() => new Date().toISOString()),
   changeType: z.string(),
   versionNumber: z.number().int(),
 });
 
-export type PortfolioIntelligenceHistory = z.infer<typeof portfolioIntelligenceHistorySchema>;
+export type PortfolioIntelligenceHistory = z.infer<
+  typeof portfolioIntelligenceHistorySchema
+>;
 export type PortfolioHistory = PortfolioIntelligenceHistory;
 
 // ─── Content / Guru ───────────────────────────────────────────────────────────
@@ -326,7 +364,9 @@ export const contentItemSchema = z.object({
   html_content: z.string().min(1),
   tags: z.array(z.string()).default([]),
   symbols: z.array(z.string()).default([]),
-  symbol_sections: z.record(z.string(), z.array(symbolSectionSchema)).default({}),
+  symbol_sections: z
+    .record(z.string(), z.array(symbolSectionSchema))
+    .default({}),
   status: z.enum(["published", "unpublished", "draft"]).default("draft"),
   summary: z.string().optional(),
   read_only: z.boolean().default(true),
@@ -354,11 +394,20 @@ export const guruInsightSchema = z.object({
   insightId: z.string().min(1),
   guruId: z.string().min(1),
   guruDisplayName: z.string().min(1),
-  guruEntityType: z.enum(["Investor", "Institution", "Analyst", "Insider"]).default("Investor"),
+  guruEntityType: z
+    .enum(["Investor", "Institution", "Analyst", "Insider"])
+    .default("Investor"),
   guruIconUrl: z.string().nullable().optional(),
   assetSymbol: z.string().min(1).toUpperCase(),
   assetClass: z.enum(["Equities", "Crypto", "Commodities", "FX", "Macro"]),
-  actionType: z.enum(["BUY", "SELL", "HOLD", "UPGRADE", "DOWNGRADE", "COMMENT"]),
+  actionType: z.enum([
+    "BUY",
+    "SELL",
+    "HOLD",
+    "UPGRADE",
+    "DOWNGRADE",
+    "COMMENT",
+  ]),
   sourceTimestamp: z.string().datetime(),
   ingestTimestamp: z.string().datetime(),
   summaryText: z.string().min(1),
@@ -379,16 +428,28 @@ export type GuruInsight = z.infer<typeof guruInsightSchema>;
 // ─── Pulse ──────────────────────────────────────────────────────────────────
 
 export const pulseProviderNameEnum = z.enum([
-  'coingecko', 'binance', 'coinbase',
-  'twelvedata', 'eodhd', 'yahoo',
-  'frankfurter',
-  'coin_gecko', 'twelve_data', 'yahoo_finance'
+  "coingecko",
+  "binance",
+  "coinbase",
+  "twelvedata",
+  "eodhd",
+  "yahoo",
+  "frankfurter",
+  "coin_gecko",
+  "twelve_data",
+  "yahoo_finance",
 ]);
 
 export type PulseProviderName = z.infer<typeof pulseProviderNameEnum>;
 
 export const pulseAssetClassEnum = z.enum([
-  'crypto', 'equity', 'index', 'commodity', 'bond', 'etf', 'fx',
+  "crypto",
+  "equity",
+  "index",
+  "commodity",
+  "bond",
+  "etf",
+  "fx",
 ]);
 
 export type PulseAssetClass = z.infer<typeof pulseAssetClassEnum>;
@@ -417,7 +478,7 @@ export const pulseRegistryEntrySchema = z.object({
 
 export type PulseRegistryEntry = z.infer<typeof pulseRegistryEntrySchema>;
 
-export const confidenceBadgeSchema = z.enum(['green', 'amber', 'red']);
+export const confidenceBadgeSchema = z.enum(["green", "amber", "red"]);
 export type ConfidenceBadge = z.infer<typeof confidenceBadgeSchema>;
 
 export const pulseNormalizedEntrySchema = z.object({
@@ -444,10 +505,15 @@ export const pulseSnapshotSchema = z.object({
   timestamp_utc: z.string().datetime(),
   assets: z.array(pulseNormalizedEntrySchema),
   degraded: z.boolean().optional(),
-  providerMeta: z.record(z.string(), z.object({
-    lastFetch: z.string().datetime(),
-    degraded: z.boolean().default(false),
-  })).optional(),
+  providerMeta: z
+    .record(
+      z.string(),
+      z.object({
+        lastFetch: z.string().datetime(),
+        degraded: z.boolean().default(false),
+      }),
+    )
+    .optional(),
 });
 
 export type PulseSnapshot = z.infer<typeof pulseSnapshotSchema>;
@@ -455,25 +521,43 @@ export type PulseSnapshot = z.infer<typeof pulseSnapshotSchema>;
 // ─── Catalyst ───────────────────────────────────────────────────────────────
 
 export const macroEventNameEnum = z.enum([
-  'CPI', 'Core CPI', 'NFP', 'FOMC Decision', 'GDP Advance', 'PCE',
-  'ISM Manufacturing', 'ISM Services', 'Retail Sales', 'Consumer Confidence',
-  'Initial Claims', 'Rate Decision', 'PMI', 'Consumer Sentiment',
+  "CPI",
+  "Core CPI",
+  "NFP",
+  "FOMC Decision",
+  "GDP Advance",
+  "PCE",
+  "ISM Manufacturing",
+  "ISM Services",
+  "Retail Sales",
+  "Consumer Confidence",
+  "Initial Claims",
+  "Rate Decision",
+  "PMI",
+  "Consumer Sentiment",
 ]);
 export type MacroEventName = z.infer<typeof macroEventNameEnum>;
 
-export const macroEventUnitEnum = z.enum(['Index', 'Thousands', '$ Millions', '%']);
+export const macroEventUnitEnum = z.enum([
+  "Index",
+  "Thousands",
+  "$ Millions",
+  "%",
+]);
 export type MacroEventUnit = z.infer<typeof macroEventUnitEnum>;
 
 export const macroVolatilityBucketEnum = z.union([
-  z.literal(0), z.literal(40), z.literal(80),
+  z.literal(0),
+  z.literal(40),
+  z.literal(80),
 ]);
 export type MacroVolatilityBucket = z.infer<typeof macroVolatilityBucketEnum>;
 
 export const macroEventSchema = z.object({
   event_id: z.string().uuid(),
-  event_type: z.literal('macro'),
+  event_type: z.literal("macro"),
   event_name: macroEventNameEnum,
-  country: z.string().default('US'),
+  country: z.string().default("US"),
   scheduled_time: z.string().datetime(),
   forecast_value: z.number().nullable().optional(),
   previous_value: z.number().nullable().optional(),
@@ -496,7 +580,11 @@ export const macroEventSchema = z.object({
   relevance_score: z.number().int().min(0).max(100).optional(),
   relevance_band: impactBandSchema.optional(),
   asset_class_tags: z.array(z.string()).optional(),
-  asset_biases: z.array(z.object({ sector: z.string(), bias: z.enum(['Risk-On', 'Risk-Off']) })).optional(),
+  asset_biases: z
+    .array(
+      z.object({ sector: z.string(), bias: z.enum(["Risk-On", "Risk-Off"]) }),
+    )
+    .optional(),
   base_impact_score: z.number().optional(),
   score_version: z.string().optional(),
   config_source: z.string().optional(),
@@ -504,7 +592,16 @@ export const macroEventSchema = z.object({
   policy_sensitivity_score: z.number().optional(),
   sector_sensitivity_score: z.number().optional(),
   index_weight_score: z.number().optional(),
-  lifecycle_stage: z.enum(['scheduled', 'imminent', 'live', 'released', 'interpreted', 'expired']).optional(),
+  lifecycle_stage: z
+    .enum([
+      "scheduled",
+      "imminent",
+      "live",
+      "released",
+      "interpreted",
+      "expired",
+    ])
+    .optional(),
   named_triggers: z.array(z.string()).optional(),
 });
 
@@ -512,9 +609,9 @@ export type MacroEvent = z.infer<typeof macroEventSchema>;
 
 export const earningsEventSchema = z.object({
   event_id: z.string().uuid(),
-  event_type: z.literal('earnings'),
+  event_type: z.literal("earnings"),
   event_name: z.string(),
-  country: z.string().default('US'),
+  country: z.string().default("US"),
   scheduled_time: z.string().datetime(),
   ticker: z.string(),
   company_name: z.string(),
@@ -524,7 +621,7 @@ export const earningsEventSchema = z.object({
   consensus_eps: z.number().nullable().optional(),
   actual_eps: z.number().nullable().optional(),
   eps_surprise_pct: z.number().nullable().optional(),
-  outcome_label: z.enum(['Beat', 'Miss', 'Inline']).nullable().optional(),
+  outcome_label: z.enum(["Beat", "Miss", "Inline"]).nullable().optional(),
   call_datetime: z.string().datetime().optional(),
   impact_score: z.number().min(0).max(100).optional(),
   impact_band: impactBandSchema.optional(),
@@ -539,7 +636,11 @@ export const earningsEventSchema = z.object({
   relevance_score: z.number().int().min(0).max(100).optional(),
   relevance_band: impactBandSchema.optional(),
   asset_class_tags: z.array(z.string()).optional(),
-  asset_biases: z.array(z.object({ sector: z.string(), bias: z.enum(['Risk-On', 'Risk-Off']) })).optional(),
+  asset_biases: z
+    .array(
+      z.object({ sector: z.string(), bias: z.enum(["Risk-On", "Risk-Off"]) }),
+    )
+    .optional(),
   base_impact_score: z.number().optional(),
   score_version: z.string().optional(),
   config_source: z.string().optional(),
@@ -547,7 +648,16 @@ export const earningsEventSchema = z.object({
   policy_sensitivity_score: z.number().optional(),
   sector_sensitivity_score: z.number().optional(),
   index_weight_score: z.number().optional(),
-  lifecycle_stage: z.enum(['scheduled', 'imminent', 'live', 'released', 'interpreted', 'expired']).optional(),
+  lifecycle_stage: z
+    .enum([
+      "scheduled",
+      "imminent",
+      "live",
+      "released",
+      "interpreted",
+      "expired",
+    ])
+    .optional(),
   named_triggers: z.array(z.string()).optional(),
   created_at: z.string().datetime(),
   updated_at: z.string().datetime(),
@@ -555,7 +665,7 @@ export const earningsEventSchema = z.object({
 
 export type EarningsEvent = z.infer<typeof earningsEventSchema>;
 
-export const catalystEventSchema = z.discriminatedUnion('event_type', [
+export const catalystEventSchema = z.discriminatedUnion("event_type", [
   macroEventSchema,
   earningsEventSchema,
 ]);
@@ -563,14 +673,23 @@ export const catalystEventSchema = z.discriminatedUnion('event_type', [
 export type CatalystEvent = z.infer<typeof catalystEventSchema>;
 
 export const macroRegimeSchema = z.object({
-  inflation_regime: z.enum(['Rising', 'Cooling', 'Persistent']),
-  liquidity_regime: z.enum(['Expanding', 'Neutral', 'Tightening']),
-  risk_regime: z.enum(['Risk-On', 'Neutral', 'Risk-Off']),
+  inflation_regime: z.enum(["Rising", "Cooling", "Persistent"]),
+  liquidity_regime: z.enum(["Expanding", "Neutral", "Tightening"]),
+  risk_regime: z.enum(["Risk-On", "Neutral", "Risk-Off"]),
   detected_at: z.string().datetime(),
   changed_at: z.string().datetime().nullable(),
-  previous_inflation_regime: z.enum(['Rising', 'Cooling', 'Persistent']).nullable().optional(),
-  previous_liquidity_regime: z.enum(['Expanding', 'Neutral', 'Tightening']).nullable().optional(),
-  previous_risk_regime: z.enum(['Risk-On', 'Neutral', 'Risk-Off']).nullable().optional(),
+  previous_inflation_regime: z
+    .enum(["Rising", "Cooling", "Persistent"])
+    .nullable()
+    .optional(),
+  previous_liquidity_regime: z
+    .enum(["Expanding", "Neutral", "Tightening"])
+    .nullable()
+    .optional(),
+  previous_risk_regime: z
+    .enum(["Risk-On", "Neutral", "Risk-Off"])
+    .nullable()
+    .optional(),
   contributing_event_ids: z.array(z.string()),
 });
 
@@ -592,36 +711,55 @@ export type EarningsHeatmapRow = z.infer<typeof earningsHeatmapRowSchema>;
 export const alertEvaluationResultSchema = z.object({
   alertId: z.string(),
   symbol: z.string(),
-  alertType: z.enum(['price_threshold', 'pct_change', 'volume_spike', 'intraday_break']),
+  alertType: z.enum([
+    "price_threshold",
+    "pct_change",
+    "volume_spike",
+    "intraday_break",
+  ]),
   triggered: z.boolean(),
   currentValue: z.number().nullable(),
   threshold: z.number().nullable(),
-  direction: z.enum(['above', 'below']).nullable(),
+  direction: z.enum(["above", "below"]).nullable(),
 });
 
 export type AlertEvaluationResult = z.infer<typeof alertEvaluationResultSchema>;
 
 export const createPulseAlertSchema = z.object({
   symbol: z.string().min(1).toUpperCase(),
-  alertType: z.enum(['price_threshold', 'pct_change', 'volume_spike', 'intraday_break']),
+  alertType: z.enum([
+    "price_threshold",
+    "pct_change",
+    "volume_spike",
+    "intraday_break",
+  ]),
   threshold: z.number().positive().optional(),
-  direction: z.enum(['above', 'below']).optional(),
+  direction: z.enum(["above", "below"]).optional(),
   enabled: z.boolean().optional().default(true),
 });
 
 export const updatePulseAlertSchema = z.object({
   threshold: z.number().positive().optional(),
-  direction: z.enum(['above', 'below']).optional(),
+  direction: z.enum(["above", "below"]).optional(),
   enabled: z.boolean().optional(),
 });
 
 export type CreatePulseAlertInput = z.infer<typeof createPulseAlertSchema>;
 export type UpdatePulseAlertInput = z.infer<typeof updatePulseAlertSchema>;
 
+export const pulseAlertSchema = createPulseAlertSchema.extend({
+  id: z.string().min(1),
+  createdAt: z.string().optional(),
+  updatedAt: z.string().optional(),
+});
+export type PulseAlert = z.infer<typeof pulseAlertSchema>;
+
 // ─── User Preferences ────────────────────────────────────────────────────────
 
 export const userPreferencesSchema = z.object({
-  sectionOrder: z.array(z.string()).default(['crypto', 'equity', 'index', 'commodity', 'bond', 'etf', 'fx']),
+  sectionOrder: z
+    .array(z.string())
+    .default(["crypto", "equity", "index", "commodity", "bond", "etf", "fx"]),
   hiddenSections: z.array(z.string()).default([]),
   sidebarCollapsed: z.boolean().default(false),
 });
@@ -664,7 +802,7 @@ export const morningBriefTopMoverSchema = z.object({
   name: z.string(),
   assetClass: z.string(),
   percentChange24h: z.number(),
-  direction: z.enum(['up', 'down']),
+  direction: z.enum(["up", "down"]),
 });
 export type MorningBriefTopMover = z.infer<typeof morningBriefTopMoverSchema>;
 
@@ -675,7 +813,13 @@ export const watchTodayEventSchema = z.object({
 });
 export type WatchTodayEvent = z.infer<typeof watchTodayEventSchema>;
 
-export const marketRegimeSchema = z.enum(['risk_on', 'risk_off', 'mixed', 'transition', 'neutral']);
+export const marketRegimeSchema = z.enum([
+  "risk_on",
+  "risk_off",
+  "mixed",
+  "transition",
+  "neutral",
+]);
 export type MarketRegime = z.infer<typeof marketRegimeSchema>;
 
 export const morningBriefSchema = z.object({
@@ -684,8 +828,8 @@ export const morningBriefSchema = z.object({
   headline: z.string(),
   summary: z.string(),
   topMovers: z.array(morningBriefTopMoverSchema),
-  generationMode: z.enum(['template', 'ai']).default('template'),
-  briefMode: z.enum(['daily', 'weekly_recap']).default('daily'),
+  generationMode: z.enum(["template", "ai"]).default("template"),
+  briefMode: z.enum(["daily", "weekly_recap"]).default("daily"),
   regime: marketRegimeSchema.optional(),
   watchToday: z.array(watchTodayEventSchema).max(3).optional(),
   watchThisWeek: z.array(watchTodayEventSchema).max(3).optional(),
@@ -695,11 +839,16 @@ export type MorningBrief = z.infer<typeof morningBriefSchema>;
 
 // ─── Whale Watch (Module 4) ──────────────────────────────────────────────────
 
-export const whaleDirectionZod = z.enum(['inflow', 'outflow', 'transfer']);
-export const walletClassificationZod = z.enum(['exchange', 'fund', 'custodian', 'unknown']);
-export const whaleConfidenceBandZod = z.enum(['low', 'medium', 'high']);
-export const flowDirectionZod = z.enum(['bullish', 'bearish', 'neutral']);
-export const crossModuleSignalZod = z.enum(['none', 'spike_detected']);
+export const whaleDirectionZod = z.enum(["inflow", "outflow", "transfer"]);
+export const walletClassificationZod = z.enum([
+  "exchange",
+  "fund",
+  "custodian",
+  "unknown",
+]);
+export const whaleConfidenceBandZod = z.enum(["low", "medium", "high"]);
+export const flowDirectionZod = z.enum(["bullish", "bearish", "neutral"]);
+export const crossModuleSignalZod = z.enum(["none", "spike_detected"]);
 
 export const whaleEventSchema = z.object({
   txId: z.string(),
@@ -751,13 +900,15 @@ export type NetFlowResponse = z.infer<typeof netFlowResponseSchema>;
 export const whaleSummarySchema = z.object({
   btc: netFlowResponseSchema.nullable(),
   eth: netFlowResponseSchema.nullable(),
-  recentSpikes: z.array(z.object({
-    chain: z.string(),
-    flowDirection: flowDirectionZod,
-    netFlowUsd: z.number(),
-    baseline7d: z.number(),
-    windowStart: z.string().datetime(),
-  })),
+  recentSpikes: z.array(
+    z.object({
+      chain: z.string(),
+      flowDirection: flowDirectionZod,
+      netFlowUsd: z.number(),
+      baseline7d: z.number(),
+      windowStart: z.string().datetime(),
+    }),
+  ),
   generatedAt: z.string().datetime(),
 });
 export type WhaleSummary = z.infer<typeof whaleSummarySchema>;
@@ -765,15 +916,19 @@ export type WhaleSummary = z.infer<typeof whaleSummarySchema>;
 // ─── STREETScore ─────────────────────────────────────────────────────────────
 
 export const streetSignalStateSchema = z.enum([
-  'strong_bullish', 'bullish_improving', 'neutral_improving',
-  'weakening', 'strong_bearish', 'none',
+  "strong_bullish",
+  "bullish_improving",
+  "neutral_improving",
+  "weakening",
+  "strong_bearish",
+  "none",
 ]);
 export type StreetSignalState = z.infer<typeof streetSignalStateSchema>;
 
-export const streetGradeSchema = z.enum(['A', 'B', 'C', 'D', 'F']);
+export const streetGradeSchema = z.enum(["A", "B", "C", "D", "F"]);
 export type StreetGrade = z.infer<typeof streetGradeSchema>;
 
-export const streetConfidenceBandSchema = z.enum(['High', 'Medium', 'Low']);
+export const streetConfidenceBandSchema = z.enum(["High", "Medium", "Low"]);
 export type StreetConfidenceBand = z.infer<typeof streetConfidenceBandSchema>;
 
 export const streetScoreEventSchema = z.object({
@@ -815,7 +970,7 @@ export const streetAnalystConsensusManualSchema = z.object({
   priceTarget: z.number(),
   currentPrice: z.number(),
   targetDeltaPct: z.number().nullable().optional(),
-  dataSource: z.string().max(20).default('MANUAL'),
+  dataSource: z.string().max(20).default("MANUAL"),
   uploadedAt: z.string().datetime().optional(),
 });
 
@@ -825,6 +980,156 @@ export const streetAnalystActionManualSchema = z.object({
   action: z.string().max(20),
   analystFirm: z.string().max(200).nullable().optional(),
   actionDate: z.string(),
-  dataSource: z.string().max(20).default('MANUAL'),
+  dataSource: z.string().max(20).default("MANUAL"),
   uploadedAt: z.string().datetime().optional(),
 });
+
+// ─── Module 8 — Arbitrage Scanner ─────────────────────────────────────────────
+
+export const arbitrageGradeSchema = z.enum(["A", "B", "C", "D", "F"]);
+export type ArbitrageGrade = z.infer<typeof arbitrageGradeSchema>;
+
+export const arbitrageConfidenceBandSchema = z.enum(["High", "Medium", "Low"]);
+export type ArbitrageConfidenceBand = z.infer<
+  typeof arbitrageConfidenceBandSchema
+>;
+
+export const arbitrageExecutionComplexitySchema = z.enum([
+  "Low",
+  "Medium",
+  "High",
+]);
+export type ArbitrageExecutionComplexity = z.infer<
+  typeof arbitrageExecutionComplexitySchema
+>;
+
+export const arbitrageSignalStateSchema = z.enum([
+  "Strong",
+  "Moderate",
+  "Weak",
+  "Invalid",
+]);
+export type ArbitrageSignalState = z.infer<typeof arbitrageSignalStateSchema>;
+
+export const arbitrageFreshnessSchema = z.enum(["fresh", "warm", "stale"]);
+export type ArbitrageFreshness = z.infer<typeof arbitrageFreshnessSchema>;
+
+export const arbitrageOpportunitySchema = z.object({
+  id: z.string().optional(),
+  pair: z.string().min(1),
+  buyExchange: z.string().min(1),
+  sellExchange: z.string().min(1),
+  grossSpreadPct: z.number(),
+  netSpreadPct: z.number(),
+  buyPrice: z.number().optional(),
+  sellPrice: z.number().optional(),
+  liquidityCapacityUsd: z.number().nonnegative(),
+  executableTradeSizeUsd: z.number().nonnegative(),
+  arbitrageScore: z.number().min(0).max(100),
+  grade: arbitrageGradeSchema,
+  confidenceBand: arbitrageConfidenceBandSchema,
+  executionComplexity: arbitrageExecutionComplexitySchema,
+  signalState: arbitrageSignalStateSchema,
+  freshness: arbitrageFreshnessSchema.optional(),
+  lastUpdated: z.string().min(1),
+  trend: z.array(z.number()).optional(),
+});
+
+export type ArbitrageOpportunity = z.infer<typeof arbitrageOpportunitySchema>;
+
+export const arbitrageOpportunitiesResponseSchema = z.object({
+  items: z.array(arbitrageOpportunitySchema),
+  updatedAt: z.string().optional(),
+});
+
+export type ArbitrageOpportunitiesResponse = z.infer<
+  typeof arbitrageOpportunitiesResponseSchema
+>;
+
+export const arbitrageSortByApiSchema = z.enum([
+  "net_spread_desc",
+  "score_desc",
+  "liquidity_desc",
+]);
+export type ArbitrageSortByApi = z.infer<typeof arbitrageSortByApiSchema>;
+
+export const arbitrageOpportunityApiDtoSchema = z.object({
+  id: z.string().optional(),
+  pair: z.string(),
+  buy_exchange: z.string(),
+  sell_exchange: z.string(),
+  gross_spread_pct: z.number(),
+  net_spread_pct: z.number(),
+  buy_price: z.number().optional(),
+  sell_price: z.number().optional(),
+  liquidity_capacity_usd: z.number(),
+  /** Present on newer API snapshots; older payloads omit this — map step fills from liquidity. */
+  executable_trade_size_usd: z.number().optional(),
+  arbitrage_score: z.number(),
+  grade: arbitrageGradeSchema,
+  confidence_band: arbitrageConfidenceBandSchema,
+  signal_state: arbitrageSignalStateSchema,
+  execution_complexity: arbitrageExecutionComplexitySchema,
+  freshness: arbitrageFreshnessSchema.optional(),
+  last_updated: z.string(),
+  trend: z.array(z.number()).optional(),
+});
+
+export type ArbitrageOpportunityApiDto = z.infer<
+  typeof arbitrageOpportunityApiDtoSchema
+>;
+
+export const arbitrageOpportunitiesApiMetaSchema = z
+  .object({
+    total: z.number().int().nonnegative(),
+    actionable_count: z.number().int().nonnegative().optional(),
+    best_net_spread_pct: z.number().optional(),
+    availablePairs: z.array(z.string()).optional(),
+    contract_version: z.string().optional(),
+    /** If `mismatch`, client should prompt refresh (TRD). */
+    contract_status: z.enum(["ok", "mismatch"]).optional(),
+    refresh_interval_ms: z.number().int().positive().optional(),
+  })
+  .passthrough();
+
+export const arbitrageOpportunitiesApiPaginationSchema = z.object({
+  nextCursor: z.string().nullable().optional(),
+  hasMore: z.boolean(),
+  pageSize: z.number().int().positive(),
+});
+
+export const arbitrageOpportunitiesApiResponseSchema = z.object({
+  opportunities: z.array(arbitrageOpportunityApiDtoSchema),
+  meta: arbitrageOpportunitiesApiMetaSchema,
+  pagination: arbitrageOpportunitiesApiPaginationSchema,
+});
+
+export type ArbitrageOpportunitiesApiResponse = z.infer<
+  typeof arbitrageOpportunitiesApiResponseSchema
+>;
+
+export function mapArbitrageOpportunityFromApiDto(
+  dto: ArbitrageOpportunityApiDto,
+): ArbitrageOpportunity {
+  return {
+    id: dto.id ?? undefined,
+    pair: dto.pair,
+    buyExchange: dto.buy_exchange,
+    sellExchange: dto.sell_exchange,
+    grossSpreadPct: dto.gross_spread_pct,
+    netSpreadPct: dto.net_spread_pct,
+    buyPrice: dto.buy_price,
+    sellPrice: dto.sell_price,
+    liquidityCapacityUsd: dto.liquidity_capacity_usd,
+    executableTradeSizeUsd:
+      dto.executable_trade_size_usd ?? dto.liquidity_capacity_usd,
+    arbitrageScore: dto.arbitrage_score,
+    grade: dto.grade,
+    confidenceBand: dto.confidence_band,
+    executionComplexity: dto.execution_complexity,
+    signalState: dto.signal_state,
+    freshness: dto.freshness,
+    lastUpdated: dto.last_updated,
+    trend: dto.trend,
+  };
+}

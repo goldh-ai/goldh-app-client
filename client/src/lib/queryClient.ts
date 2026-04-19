@@ -1,8 +1,7 @@
 import { QueryClient, QueryFunction } from "@tanstack/react-query";
 
-// VITE_API_BASE_URL allows the client to connect to an external server.
-// Set it to https://dev.goldh.app (or similar) in the contractor's .env.
-// In local development (Vite), we leave it empty so the local proxy handles it to avoid CORS.
+// Deployments (e.g. Vercel): set VITE_API_BASE_URL to the API origin (see .env.example).
+// Local dev: leave unset so /api is same-origin and the Vite proxy can forward.
 const API_BASE = import.meta.env.DEV 
   ? '' 
   : (import.meta.env.VITE_API_BASE_URL ?? '').replace(/\/$/, '');
@@ -15,6 +14,12 @@ export function apiUrl(path: string): string {
   // Ensure exactly one slash between API_BASE and path
   const normalizedPath = path.startsWith('/') ? path : `/${path}`;
   return `${API_BASE}${normalizedPath}`;
+}
+
+/** Bearer token from localStorage for GOLDH protected API routes (omit if unauthenticated). */
+export function getSessionAuthHeaders(): Record<string, string> {
+  const sessionId = localStorage.getItem("sessionId");
+  return sessionId ? { Authorization: `Bearer ${sessionId}` } : {};
 }
 
 const FETCH_TIMEOUT_MS = 15_000; // 15s — generous for slow dev servers
@@ -38,12 +43,10 @@ export async function apiRequest(
   url: string,
   data?: unknown | undefined,
 ): Promise<Response> {
-  const sessionId = localStorage.getItem("sessionId");
-  const headers: Record<string, string> = data ? { "Content-Type": "application/json" } : {};
-
-  if (sessionId) {
-    headers["Authorization"] = `Bearer ${sessionId}`;
-  }
+  const headers: Record<string, string> = {
+    ...getSessionAuthHeaders(),
+    ...(data ? { "Content-Type": "application/json" } : {}),
+  };
 
   const res = await fetchWithTimeout(apiUrl(url), {
     method,
@@ -62,8 +65,7 @@ export const getQueryFn: <T>(options: {
 }) => QueryFunction<T> =
   ({ on401: unauthorizedBehavior }) =>
     async ({ queryKey }) => {
-      const sessionId = localStorage.getItem("sessionId");
-      const headers: Record<string, string> = sessionId ? { "Authorization": `Bearer ${sessionId}` } : {};
+      const headers: Record<string, string> = { ...getSessionAuthHeaders() };
 
       const rawKey = queryKey.join("/") as string;
       const res = await fetchWithTimeout(apiUrl(rawKey), {

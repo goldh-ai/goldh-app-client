@@ -1,4 +1,5 @@
 import { useQuery } from '@tanstack/react-query';
+import { apiUrl } from '@/lib/queryClient';
 
 export interface MacroRegimeData {
     inflation_regime: 'Rising' | 'Cooling' | 'Persistent';
@@ -18,7 +19,7 @@ export function useMacroRegime() {
         queryFn: async () => {
             const sessionId = localStorage.getItem('sessionId');
             const headers: Record<string, string> = sessionId ? { Authorization: `Bearer ${sessionId}` } : {};
-            const res = await fetch('/api/catalyst/macro_regime', { headers, credentials: 'include' });
+            const res = await fetch(apiUrl('/api/catalyst/macro_regime'), { headers, credentials: 'include' });
             if (res.status === 404) return null as any;
             if (!res.ok) throw new Error(`Failed to fetch macro regime: ${res.status}`);
             return res.json();

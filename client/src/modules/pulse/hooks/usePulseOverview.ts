@@ -7,6 +7,7 @@
  */
 
 import { useQuery } from '@tanstack/react-query';
+import { apiUrl } from '@/lib/queryClient';
 import type { PulseOverviewExtended, PulseAssetDetailResponse, AlertEvaluationResult } from '../types';
 
 function getAuthHeaders(): Record<string, string> {
@@ -34,7 +35,7 @@ export function usePulseOverview() {
   return useQuery<PulseOverviewExtended, Error>({
     queryKey: ['/api/pulse/overview', 'evaluate'],
     queryFn: async () => {
-      const response = await fetch('/api/pulse/overview?evaluate=true', {
+      const response = await fetch(apiUrl('/api/pulse/overview?evaluate=true'), {
         headers: getAuthHeaders(),
         credentials: 'include',
       });
@@ -73,7 +74,7 @@ export function usePulseAsset(symbol: string | undefined) {
   return useQuery<PulseAssetDetailResponse, Error>({
     queryKey: ['/api/pulse/asset', symbol],
     queryFn: async () => {
-      const response = await fetch(`/api/pulse/asset/${symbol}`, {
+      const response = await fetch(apiUrl(`/api/pulse/asset/${symbol}`), {
         headers: getAuthHeaders(),
         credentials: 'include',
       });

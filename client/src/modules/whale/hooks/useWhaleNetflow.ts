@@ -8,6 +8,7 @@
  */
 
 import { useQuery } from '@tanstack/react-query';
+import { apiUrl } from '@/lib/queryClient';
 import type { NetFlowResponse } from '../types';
 
 function getAuthHeaders(): Record<string, string> {
@@ -20,7 +21,7 @@ export function useWhaleNetflow(chain: 'BTC' | 'ETH' = 'BTC', options?: { enable
         queryKey: ['/api/whale/netflow', chain],
         enabled: options?.enabled !== false,
         queryFn: async () => {
-            const res = await fetch(`/api/whale/netflow?chain=${chain}`, {
+            const res = await fetch(apiUrl(`/api/whale/netflow?chain=${chain}`), {
                 headers: getAuthHeaders(),
                 credentials: 'include',
             });

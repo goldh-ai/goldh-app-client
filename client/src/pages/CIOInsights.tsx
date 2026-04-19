@@ -293,7 +293,7 @@ export default function CIOInsights() {
                         <p className="text-gray-400 text-lg font-bold mb-2 uppercase tracking-widest">No matching insights found</p>
                         <p className="text-gray-500 text-sm">Refine your search parameters or reset all filters.</p>
                         <Button
-                            variant="link"
+                            variant="ghost"
                             className="text-[#C7AE6A] mt-4 font-bold"
                             onClick={() => {
                                 setActiveTab("all");

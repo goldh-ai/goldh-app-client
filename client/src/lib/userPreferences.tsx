@@ -1,5 +1,6 @@
 import { createContext, useContext, useState, useEffect, useCallback, ReactNode } from "react";
 import { useAuth } from "./auth";
+import { apiUrl, getSessionAuthHeaders } from "./queryClient";
 
 export interface UserPreferencesData {
   sectionOrder: string[];
@@ -36,8 +37,9 @@ export function UserPreferencesProvider({ children }: { children: ReactNode }) {
     let cancelled = false;
     setIsLoading(true);
 
-    fetch("/api/user/preferences", {
-      headers: { Authorization: `Bearer ${sessionId}` },
+    fetch(apiUrl("/api/user/preferences"), {
+      headers: getSessionAuthHeaders(),
+      credentials: "include",
     })
       .then((res) => res.ok ? res.json() : null)
       .then((data) => {
@@ -62,12 +64,13 @@ export function UserPreferencesProvider({ children }: { children: ReactNode }) {
     setPreferences((prev) => ({ ...prev, ...patch }));
 
     try {
-      await fetch("/api/user/preferences", {
+      await fetch(apiUrl("/api/user/preferences"), {
         method: "PUT",
         headers: {
           "Content-Type": "application/json",
-          Authorization: `Bearer ${sessionId}`,
+          ...getSessionAuthHeaders(),
         },
+        credentials: "include",
         body: JSON.stringify(patch),
       });
     } catch (err) {

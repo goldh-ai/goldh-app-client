@@ -8,6 +8,7 @@
  */
 
 import { useQuery } from '@tanstack/react-query';
+import { apiUrl } from '@/lib/queryClient';
 import type { WhaleEventsFilter, WhaleEventsResponse } from '../types';
 
 function getAuthHeaders(): Record<string, string> {
@@ -31,7 +32,7 @@ export function useWhaleEvents(filter: WhaleEventsFilter = {}) {
         queryKey: ['/api/whale/events', filter],
         queryFn: async () => {
             const qs = buildQueryString(filter);
-            const res = await fetch(`/api/whale/events${qs}`, {
+            const res = await fetch(apiUrl(`/api/whale/events${qs}`), {
                 headers: getAuthHeaders(),
                 credentials: 'include',
             });

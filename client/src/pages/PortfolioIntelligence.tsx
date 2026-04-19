@@ -60,6 +60,7 @@ import {
     PortfolioHistory
 } from "@shared/types";
 import { format } from "date-fns";
+import { apiUrl, getSessionAuthHeaders } from "@/lib/queryClient";
 
 // Helper: Format Currency
 const formatCurrency = (val: number, isCrypto = false) => {
@@ -100,7 +101,10 @@ export default function PortfolioIntelligence() {
     const fetchPortfolio = async () => {
         try {
             setRefreshing(true);
-            const res = await fetch("/api/portfolio-intelligence");
+            const res = await fetch(apiUrl("/api/portfolio-intelligence"), {
+                headers: getSessionAuthHeaders(),
+                credentials: "include",
+            });
             if (!res.ok) throw new Error("Failed to fetch");
             const data = await res.json();
 
@@ -125,7 +129,10 @@ export default function PortfolioIntelligence() {
         try {
             setHistoryItem(item);
             setHistoryLoading(true);
-            const res = await fetch(`/api/portfolio-intelligence/${item.id}/history`);
+            const res = await fetch(apiUrl(`/api/portfolio-intelligence/${item.id}/history`), {
+                headers: getSessionAuthHeaders(),
+                credentials: "include",
+            });
             if (!res.ok) throw new Error("Failed to fetch history");
             const data = await res.json();
             setHistoryLogs(data);
