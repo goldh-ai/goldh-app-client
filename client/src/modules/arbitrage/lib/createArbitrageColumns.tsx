@@ -30,7 +30,6 @@ import {
   ARBITRAGE_SORTABLE_COLUMN_ID,
   ARBITRAGE_SORT_DIR,
 } from "./arbitrageSort";
-
 const columnHelper = createColumnHelper<ArbitrageOpportunity>();
 
 type HeaderAlign = "left" | "center" | "right";

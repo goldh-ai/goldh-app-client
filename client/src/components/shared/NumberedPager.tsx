@@ -1,3 +1,4 @@
+import { memo } from "react";
 import {
   ChevronLeft,
   ChevronRight,
@@ -59,7 +60,7 @@ function buildPageSlots(pageIndex: number, pageCount: number): number[] {
   return slots;
 }
 
-export function NumberedPager({
+function NumberedPagerInner({
   pageIndex,
   pageCount,
   totalCount,
@@ -211,3 +212,6 @@ export function NumberedPager({
     </nav>
   );
 }
+
+/** Memoized export — skips re-renders when pager props are unchanged (stabilize callbacks upstream for best effect). */
+export const NumberedPager = memo(NumberedPagerInner);

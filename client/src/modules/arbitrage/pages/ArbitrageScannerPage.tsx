@@ -16,6 +16,7 @@ import {
   ArbitrageFiltersToolbar,
   ArbitrageMobileActions,
 } from "../components/ArbitrageFiltersToolbar";
+import { ArbitragePrimeStrip } from "../components/ArbitragePrimeStrip";
 import { createArbitrageColumns } from "../lib/createArbitrageColumns";
 import {
   ArbitrageHttpError,
@@ -306,7 +307,7 @@ export default function ArbitrageScannerPage() {
 
   return (
     <AppLayout title="Arbitrage Scanner">
-      <main className="container mx-auto flex h-full min-h-0 max-w-7xl flex-col px-4 pb-4 pt-6 duration-700 animate-in fade-in sm:px-6">
+      <main className="container mx-auto flex max-w-7xl flex-col px-4 pb-4 pt-6 duration-700 animate-in fade-in sm:px-6">
         <PageHeader
           className="mb-6 shrink-0"
           label="Price Inefficiency Intelligence"
@@ -318,7 +319,7 @@ export default function ArbitrageScannerPage() {
         {!pro ? (
           <ArbitrageTierGate />
         ) : (
-          <div className="flex min-h-0 flex-1 flex-col gap-3">
+          <div className="flex flex-col gap-3">
             <ArbitrageFiltersToolbar
               pairQuery={pairQuery}
               onPairQueryChange={setPairQuery}
@@ -373,10 +374,13 @@ export default function ArbitrageScannerPage() {
 
             <div className="flex items-center justify-between gap-3 md:hidden">
               <div className="flex min-w-0 items-center gap-3">
-                <div className="h-5 w-1 rounded-full bg-[#C7AE6A] shadow-[0_0_8px_rgba(199,174,106,0.3)]" />
-                <h3 className="text-lg font-bold tracking-tight text-white">Opportunities</h3>
+                <div
+                  className="h-5 w-1 shrink-0 rounded-full bg-[#C7AE6A] shadow-[0_0_8px_rgba(199,174,106,0.3)]"
+                  aria-hidden
+                />
+                <h3 className="text-lg font-bold tracking-tight text-foreground">Opportunities</h3>
                 {!isLoading ? (
-                  <span className="rounded-md bg-gray-800 px-1.5 py-0.5 text-xs font-bold text-gray-400">
+                  <span className="rounded-md bg-[#1a1a1a] px-2 py-0.5 text-[10px] font-bold tabular-nums text-[#4a4a4a]">
                     {opportunitiesTotal}
                   </span>
                 ) : null}
@@ -402,16 +406,23 @@ export default function ArbitrageScannerPage() {
               className="md:hidden"
             />
 
-            <div className="flex min-h-0 flex-1 flex-col gap-2 md:gap-2">
+            <div className="flex flex-col gap-3 md:gap-3">
               <div className="hidden shrink-0 items-center gap-3 md:flex">
-                <div className="h-5 w-1 rounded-full bg-[#C7AE6A] shadow-[0_0_8px_rgba(199,174,106,0.3)]" />
-                <h3 className="text-lg font-bold tracking-tight text-white">Opportunities</h3>
+                <div
+                  className="h-5 w-1 shrink-0 rounded-full bg-[#C7AE6A] shadow-[0_0_8px_rgba(199,174,106,0.3)]"
+                  aria-hidden
+                />
+                <h3 className="text-lg font-bold tracking-tight text-foreground">Opportunities</h3>
                 {!isLoading ? (
-                  <span className="rounded-md bg-gray-800 px-1.5 py-0.5 text-xs font-bold text-gray-400">
+                  <span className="rounded-md bg-[#1a1a1a] px-2 py-0.5 text-[10px] font-bold tabular-nums text-[#4a4a4a]">
                     {opportunitiesTotal}
                   </span>
                 ) : null}
               </div>
+
+              {!isLoading && !showEmptyError && flatOpportunities.length > 0 ? (
+                <ArbitragePrimeStrip items={flatOpportunities} />
+              ) : null}
 
               <BaseTable
                 columns={columns}
@@ -419,7 +430,7 @@ export default function ArbitrageScannerPage() {
                 totalCount={opportunitiesTotal}
                 isLoading={isLoading}
                 isError={showEmptyError}
-                fillAvailableHeight
+                documentHeightScroll
                 getRowId={(row) => arbitrageOpportunityStableId(row)}
                 manualSorting
                 sorting={arbitrageSorting}

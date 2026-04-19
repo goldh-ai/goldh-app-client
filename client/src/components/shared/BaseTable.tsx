@@ -1,5 +1,5 @@
-import { useEffect, useState } from "react";
-import type { ReactNode } from "react";
+import { memo, useEffect, useState } from "react";
+import type { ReactElement, ReactNode } from "react";
 import {
   flexRender,
   getCoreRowModel,
@@ -52,6 +52,7 @@ export type BaseTableProps<TData> = {
   skeletonColumnCount?: number;
   skeletonRowCount?: number;
   fillAvailableHeight?: boolean;
+  documentHeightScroll?: boolean;
   emptyTitle?: string;
   emptyDescription?: string;
   onClearFilters?: () => void;
@@ -63,6 +64,7 @@ export type BaseTableProps<TData> = {
   tableFooter?: ReactNode;
   /** Render built-in local pagination controls (defaults to true). */
   showPagination?: boolean;
+  getRowClassName?: (row: TData) => string | undefined;
 };
 
 function TableLoadingSkeleton({
@@ -124,7 +126,7 @@ function getMetaHeadClass(meta: unknown): string | undefined {
   );
 }
 
-export function BaseTable<TData>({
+function BaseTableInner<TData>({
   columns,
   data,
   totalCount,
@@ -138,6 +140,7 @@ export function BaseTable<TData>({
   skeletonColumnCount = 8,
   skeletonRowCount: skeletonRowCountProp,
   fillAvailableHeight = false,
+  documentHeightScroll = false,
   emptyTitle = "No matching rows",
   emptyDescription = "Refine filters or clear to show all rows.",
   onClearFilters,
@@ -145,6 +148,7 @@ export function BaseTable<TData>({
   children,
   tableFooter,
   showPagination = true,
+  getRowClassName,
 }: BaseTableProps<TData>) {
   const pageSize = pagination.pageSize;
   const effectiveSkeletonRows =
@@ -184,18 +188,23 @@ export function BaseTable<TData>({
   const showTableFooterWhileLoading = Boolean(
     showPagination || children || tableFooter,
   );
-  const scrollAreaClass = fillAvailableHeight
-    ? "custom-scrollbar min-h-0 flex-1 overflow-auto [scrollbar-gutter:stable]"
-    : "custom-scrollbar max-h-[70vh] min-h-0 overflow-auto [scrollbar-gutter:stable]";
+  const scrollAreaClass = documentHeightScroll
+    ? "custom-scrollbar overflow-x-auto overflow-y-visible [scrollbar-gutter:stable]"
+    : fillAvailableHeight
+      ? "custom-scrollbar min-h-0 flex-1 overflow-auto [scrollbar-gutter:stable]"
+      : "custom-scrollbar max-h-[70vh] min-h-0 overflow-auto [scrollbar-gutter:stable]";
+
+  const tableShellLayoutClass = documentHeightScroll
+    ? "flex flex-col overflow-visible"
+    : cn(
+      "flex flex-col",
+      fillAvailableHeight ? "h-full min-h-0 flex-1 overflow-hidden" : "overflow-visible",
+    );
 
   if (isLoading) {
     return (
       <div
-        className={cn(
-          INSTITUTIONAL_TABLE_SHELL,
-          "flex flex-col",
-          fillAvailableHeight ? "h-full min-h-0 flex-1 overflow-hidden" : "overflow-visible",
-        )}
+        className={cn(INSTITUTIONAL_TABLE_SHELL, tableShellLayoutClass)}
       >
         <div
           className={cn(
@@ -279,13 +288,7 @@ export function BaseTable<TData>({
   const showTableFooter = Boolean(showPagination || children || tableFooter);
 
   return (
-    <div
-      className={cn(
-        INSTITUTIONAL_TABLE_SHELL,
-        "flex flex-col",
-        fillAvailableHeight ? "h-full min-h-0 flex-1 overflow-hidden" : "overflow-visible",
-      )}
-    >
+    <div className={cn(INSTITUTIONAL_TABLE_SHELL, tableShellLayoutClass)}>
       <div
         className={cn(
           scrollAreaClass,
@@ -324,7 +327,11 @@ export function BaseTable<TData>({
             {table.getRowModel().rows.map((row) => (
               <tr
                 key={row.id}
-                className={cn("group", institutionalTableDataRowClass)}
+                className={cn(
+                  "group",
+                  institutionalTableDataRowClass,
+                  getRowClassName?.(row.original),
+                )}
               >
                 {row.getVisibleCells().map((cell) => (
                   <td
@@ -386,3 +393,7 @@ export function BaseTable<TData>({
     </div>
   );
 }
+
+export const BaseTable = memo(BaseTableInner) as <TData>(
+  props: BaseTableProps<TData>,
+) => ReactElement | null;

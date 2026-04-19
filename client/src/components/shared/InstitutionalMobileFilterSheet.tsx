@@ -1,4 +1,4 @@
-import { useState, type ReactNode } from "react";
+import { memo, useState, type ReactNode } from "react";
 import { Filter } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
@@ -23,7 +23,7 @@ export interface InstitutionalMobileFilterSheetProps {
   triggerClassName?: string;
 }
 
-export function InstitutionalMobileFilterSheet({
+function InstitutionalMobileFilterSheetInner({
   children,
   onClear,
   title = "Filters",
@@ -79,3 +79,5 @@ export function InstitutionalMobileFilterSheet({
     </Sheet>
   );
 }
+
+export const InstitutionalMobileFilterSheet = memo(InstitutionalMobileFilterSheetInner);

@@ -1,3 +1,4 @@
+import { memo } from "react";
 import { Search } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import {
@@ -21,7 +22,7 @@ export type InstitutionalFilterSearchFieldProps = {
  * Label + search icon + input — matches Pulse / Portfolio institutional search styling.
  * Use in feature filter toolbars (Module 8+).
  */
-export function InstitutionalFilterSearchField({
+function InstitutionalFilterSearchFieldInner({
   id,
   label,
   value,
@@ -57,3 +58,5 @@ export function InstitutionalFilterSearchField({
     </div>
   );
 }
+
+export const InstitutionalFilterSearchField = memo(InstitutionalFilterSearchFieldInner);

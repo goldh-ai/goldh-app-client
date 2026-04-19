@@ -1,7 +1,8 @@
 import { cn } from "@/lib/utils";
 
+/** Matches Pulse / STREETScore feature grids: same panel, border, and glass as `PulseAssetTable` shell. */
 export const INSTITUTIONAL_TABLE_SHELL =
-  "bg-[#111111]/40 backdrop-blur-xl border border-border rounded-2xl overflow-hidden glass-morphism shadow-2xl";
+  "bg-[#111111]/40 backdrop-blur-xl border border-[#222] rounded-2xl overflow-hidden glass-morphism shadow-2xl";
 
 export const INSTITUTIONAL_FILTER_BAR = "bg-[#050505] py-4 mb-0 transition-all";
 
@@ -78,7 +79,7 @@ export const institutionalTableChromeSurfaceClass = "bg-[#0c0c0c]";
 
 /** Apply to each `<th>` (not `<thead>`) — `border-collapse` breaks sticky headers. */
 export const institutionalTableHeadStickyClass = cn(
-  "sticky top-0 z-30 border-b border-border",
+  "sticky top-0 z-30 border-b border-[#222]",
   institutionalTableChromeSurfaceClass,
 );
 
@@ -88,7 +89,7 @@ export const institutionalTableBodyDivideClass =
 
 /** Full-width bar under the scroll region (BaseTable footer). */
 export const institutionalTableFooterStripClass = cn(
-  "shrink-0 border-t border-border px-4 py-3 shadow-[0_-1px_0_0_hsl(var(--border)_/_0.35)] rounded-b-2xl",
+  "shrink-0 border-t border-[#222] px-4 py-3 rounded-b-2xl",
   institutionalTableChromeSurfaceClass,
 );
 
@@ -113,7 +114,7 @@ export const institutionalTableBelowCalloutClass =
 
 /** Loading skeleton thead — same surface as data thead (non-sticky). */
 export const institutionalTableSkeletonTheadClass = cn(
-  "border-b border-border",
+  "border-b border-[#222]",
   institutionalTableChromeSurfaceClass,
 );
 

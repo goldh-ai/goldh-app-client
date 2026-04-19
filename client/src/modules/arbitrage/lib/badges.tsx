@@ -11,6 +11,20 @@ import type {
 const arbitrageTierBadgeFrameClass =
   "inline-flex h-7 w-full min-w-0 shrink-0 items-center justify-center";
 
+/**
+ * Compact chip surfaces for prime-strip “reasons” — same tokens as {@link SignalBadge} Strong,
+ * {@link ConfidenceBadge} High, {@link ComplexityBadge} Low. Liquidity uses the Moderate-signal
+ * primary accent (no table column equivalent).
+ */
+export const arbitragePrimeChipSignalStrongClass =
+  "border-chart-4/50 bg-chart-4/25 text-chart-4";
+export const arbitragePrimeChipConfidenceHighClass =
+  "border-chart-4/50 bg-chart-4/25 text-chart-4";
+export const arbitragePrimeChipComplexityLowClass =
+  "border-chart-4/45 bg-chart-4/18 text-chart-4";
+export const arbitragePrimeChipDeepLiquidityClass =
+  "border-primary/50 bg-primary/18 text-primary";
+
 export function GradeBadge({ grade }: { grade: ArbitrageGrade }) {
   /** TRD: A=green, B=light green, C=yellow, D=orange, F=red — theme tokens (chart-4, status-away, chart-1, destructive). */
   const styles: Record<ArbitrageGrade, string> = {
@@ -95,7 +109,7 @@ export function SignalBadge({ state }: { state: ArbitrageSignalState }) {
 export function ComplexityBadge({ level }: { level: ArbitrageExecutionComplexity }) {
   const styles: Record<ArbitrageExecutionComplexity, string> = {
     Low: "border-chart-4/45 bg-chart-4/18 text-chart-4",
-    Medium: "b7order-status-away/45 bg-status-away/15 text-status-away",
+    Medium: "border-status-away/45 bg-status-away/15 text-status-away",
     High: "border-destructive/45 bg-destructive/15 text-destructive-foreground",
   };
   return (
