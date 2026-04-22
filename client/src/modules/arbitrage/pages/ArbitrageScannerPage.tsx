@@ -44,6 +44,89 @@ import {
 } from "../lib/arbitrageSort";
 import { ArrowRightLeft, RefreshCw, ShieldAlert, WifiOff } from "lucide-react";
 
+const MARKET_REGIME_REFRESH_MS = 5 * 60 * 1000;
+
+type MarketRegime = "volatile" | "stable" | "trending";
+
+function getSpreadCompressionSpeed(meta: unknown): string | number | undefined {
+  if (!meta || typeof meta !== "object") return undefined;
+  const m = meta as Record<string, unknown>;
+  const speed = m.spread_compression_speed;
+  if (typeof speed === "number" || typeof speed === "string") return speed;
+  return undefined;
+}
+
+function resolveMarketRegime(speed: string | number | undefined): MarketRegime {
+  if (typeof speed === "number") {
+    if (speed >= 0.7) return "volatile";
+    if (speed <= 0.3) return "trending";
+    return "stable";
+  }
+  if (typeof speed === "string") {
+    const normalized = speed.trim().toLowerCase();
+    if (
+      normalized.includes("closing_fast") ||
+      normalized.includes("closing fast") ||
+      normalized.includes("high") ||
+      normalized.includes("widening") ||
+      normalized.includes("volatile")
+    ) {
+      return "volatile";
+    }
+    if (
+      normalized.includes("stable") ||
+      normalized.includes("normal") ||
+      normalized.includes("medium")
+    ) {
+      return "stable";
+    }
+    if (
+      normalized.includes("compressing") ||
+      normalized.includes("closing_slow") ||
+      normalized.includes("closing slow") ||
+      normalized.includes("low") ||
+      normalized.includes("tight")
+    ) {
+      return "trending";
+    }
+  }
+  return "stable";
+}
+
+function MarketRegimeBanner({ regime }: { regime: MarketRegime }) {
+  if (regime === "volatile") {
+    return (
+      <div className="rounded-lg border border-rose-500/35 bg-rose-500/12 px-3 py-2">
+        <p className="text-xs font-medium text-rose-100">
+          <span className="font-bold text-rose-300">🔴 VOLATILE</span>
+          {" — "}
+          Spreads expanding, execute fast or miss opportunities
+        </p>
+      </div>
+    );
+  }
+  if (regime === "trending") {
+    return (
+      <div className="rounded-lg border border-sky-500/35 bg-sky-500/12 px-3 py-2">
+        <p className="text-xs font-medium text-sky-100">
+          <span className="font-bold text-sky-300">🔵 TRENDING</span>
+          {" — "}
+          Spreads tight, wait for rebalancing
+        </p>
+      </div>
+    );
+  }
+  return (
+    <div className="rounded-lg border border-amber-500/35 bg-amber-500/12 px-3 py-2">
+      <p className="text-xs font-medium text-amber-100">
+        <span className="font-bold text-amber-300">🟡 STABLE</span>
+        {" — "}
+        Good execution window, profit predictable
+      </p>
+    </div>
+  );
+}
+
 function arbitrageErrorMessage(error: unknown, fallback: string): string {
   if (error instanceof ArbitrageHttpError && error.status === 503) {
     return "The arbitrage snapshot is being regenerated. This usually takes a few seconds.";
@@ -304,6 +387,18 @@ export default function ArbitrageScannerPage() {
   }, []);
 
   const showEmptyError = isError && !isLoading && flatOpportunities.length === 0;
+  const marketRegime = useMemo(() => {
+    const speed = getSpreadCompressionSpeed(meta);
+    return resolveMarketRegime(speed);
+  }, [meta]);
+
+  useEffect(() => {
+    if (!pro) return;
+    const id = window.setInterval(() => {
+      void refetch();
+    }, MARKET_REGIME_REFRESH_MS);
+    return () => window.clearInterval(id);
+  }, [pro, refetch]);
 
   return (
     <AppLayout title="Arbitrage Scanner">
@@ -399,6 +494,9 @@ export default function ArbitrageScannerPage() {
                 onClearAllFilters={clearFilters}
               />
             </div>
+            <div className="md:hidden">
+              <MarketRegimeBanner regime={marketRegime} />
+            </div>
 
             <ActiveFilterChips
               filters={activeFilters}
@@ -418,6 +516,9 @@ export default function ArbitrageScannerPage() {
                     {opportunitiesTotal}
                   </span>
                 ) : null}
+              </div>
+              <div className="hidden md:block">
+                <MarketRegimeBanner regime={marketRegime} />
               </div>
 
               {!isLoading && !showEmptyError && flatOpportunities.length > 0 ? (

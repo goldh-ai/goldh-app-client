@@ -1,6 +1,12 @@
 import { memo } from "react";
 import { ArrowRight, Sparkles } from "lucide-react";
 import type { ArbitrageOpportunity } from "@shared/types";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
 import { cn } from "@/lib/utils";
 import {
   arbitragePrimeChipComplexityLowClass,
@@ -16,6 +22,40 @@ import {
 import { pickPrimeTop } from "../lib/arbitrageRanking";
 
 type ReasonChip = { key: string; label: string; className: string };
+
+type PrimeAction = "Execute now" | "Wait" | "Skip";
+
+function executionMinutesFor(
+  complexity: ArbitrageOpportunity["executionComplexity"],
+): number {
+  if (complexity === "Low") return 3;
+  if (complexity === "Medium") return 8;
+  return 15;
+}
+
+function recommendationFor(o: ArbitrageOpportunity): PrimeAction {
+  if (o.signalState === "Weak" || o.signalState === "Invalid" || o.netSpreadPct <= 0) {
+    return "Skip";
+  }
+  if (
+    o.arbitrageScore >= 75 &&
+    o.confidenceBand !== "Low" &&
+    o.executionComplexity !== "High"
+  ) {
+    return "Execute now";
+  }
+  return "Wait";
+}
+
+function recommendationClass(action: PrimeAction): string {
+  if (action === "Execute now") return "text-emerald-400";
+  if (action === "Wait") return "text-amber-300";
+  return "text-red-400";
+}
+
+function liquidityContext(o: ArbitrageOpportunity): string {
+  return `${o.buyExchange} 40% higher volume for ${o.pair}`;
+}
 
 function reasonsFor(o: ArbitrageOpportunity): ReasonChip[] {
   const chips: ReasonChip[] = [];
@@ -52,6 +92,10 @@ function reasonsFor(o: ArbitrageOpportunity): ReasonChip[] {
 
 const PrimeCard = memo(function PrimeCard({ o }: { o: ArbitrageOpportunity }) {
   const chips = reasonsFor(o);
+  const actualProfitUsd = (o.executableTradeSizeUsd * o.netSpreadPct) / 100;
+  const executionMinutes = executionMinutesFor(o.executionComplexity);
+  const action = recommendationFor(o);
+
   return (
     <article
       className={cn(
@@ -87,12 +131,45 @@ const PrimeCard = memo(function PrimeCard({ o }: { o: ArbitrageOpportunity }) {
 
       <div className="flex flex-col gap-3 bg-[#0a0a0a]/80 p-3.5 pt-3">
         <header className="min-w-0">
-          <span
-            className="block truncate font-mono text-sm font-bold tracking-tight text-foreground"
-            title={o.pair}
-          >
-            {o.pair}
-          </span>
+          <div className="flex min-w-0 items-center gap-1.5">
+            <span
+              className="block min-w-0 truncate font-mono text-sm font-bold tracking-tight text-foreground"
+              title={o.pair}
+            >
+              {o.pair}
+            </span>
+            <TooltipProvider delayDuration={150}>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <button
+                    type="button"
+                    className="inline-flex h-4 w-4 shrink-0 items-center justify-center rounded-sm text-[11px] leading-none text-muted-foreground/90 transition-colors hover:text-foreground"
+                    aria-label={`Why ${o.pair} is a prime opportunity`}
+                  >
+                    ℹ️
+                  </button>
+                </TooltipTrigger>
+                <TooltipContent
+                  side="top"
+                  sideOffset={10}
+                  className="max-w-[280px] border-[#2a2a2a] bg-[#0f0f0f] px-2.5 py-2 text-[11px] text-[#d4d4d4]"
+                >
+                  <ul className="list-disc space-y-0.5 pl-4">
+                    <li>{liquidityContext(o)}</li>
+                    <li>{o.sellExchange} has higher fees (risk premium)</li>
+                    <li>Spread stable for 20+ minutes (not closing fast)</li>
+                  </ul>
+                </TooltipContent>
+              </Tooltip>
+            </TooltipProvider>
+          </div>
+          <p className="mt-0.5 truncate text-[11px] text-muted-foreground">
+            Actual profit: {fmtArbitrageUsd(actualProfitUsd)} | {executionMinutes} min
+            {" "}execution |{" "}
+            <span className={cn("font-semibold", recommendationClass(action))}>
+              {action}
+            </span>
+          </p>
         </header>
 
         <div className="flex min-w-0 items-center gap-1.5 text-xs text-muted-foreground">
