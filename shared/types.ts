@@ -118,4 +118,29 @@ export type {
   ArbitrageSignalState,
 } from "./schema";
 
+// ─── Copy Trade Finder (Module 9) ───────────────────────────────────────────
+
+export {
+  copyTradeTraderSchema,
+  copyTradeTraderApiDtoSchema,
+  copyTradeLeaderboardApiResponseSchema,
+  copyTradeSortByApiSchema,
+  copyTradeGradeSchema,
+  copyTradeConfidenceBandSchema,
+  copyTradeSignalStateSchema,
+  copyTradeLifecycleStateSchema,
+  mapCopyTradeTraderFromApiDto,
+} from "./schema";
+
+export type {
+  CopyTradeTrader,
+  CopyTradeTraderApiDto,
+  CopyTradeLeaderboardApiResponse,
+  CopyTradeSortByApi,
+  CopyTradeGrade,
+  CopyTradeConfidenceBand,
+  CopyTradeSignalState,
+  CopyTradeLifecycleState,
+} from "./schema";
+
 // ─── Whale Watch ──────────────────────────────────────────────────────────────

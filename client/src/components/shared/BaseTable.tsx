@@ -65,6 +65,7 @@ export type BaseTableProps<TData> = {
   /** Render built-in local pagination controls (defaults to true). */
   showPagination?: boolean;
   getRowClassName?: (row: TData) => string | undefined;
+  onRowClick?: (row: TData) => void;
 };
 
 function TableLoadingSkeleton({
@@ -149,6 +150,7 @@ function BaseTableInner<TData>({
   tableFooter,
   showPagination = true,
   getRowClassName,
+  onRowClick,
 }: BaseTableProps<TData>) {
   const pageSize = pagination.pageSize;
   const effectiveSkeletonRows =
@@ -330,8 +332,10 @@ function BaseTableInner<TData>({
                 className={cn(
                   "group",
                   institutionalTableDataRowClass,
+                  onRowClick && "cursor-pointer",
                   getRowClassName?.(row.original),
                 )}
+                onClick={() => onRowClick?.(row.original)}
               >
                 {row.getVisibleCells().map((cell) => (
                   <td

@@ -1133,3 +1133,112 @@ export function mapArbitrageOpportunityFromApiDto(
     trend: dto.trend,
   };
 }
+
+// ─── Module 9 — Copy Trade Finder ────────────────────────────────────────────
+
+export const copyTradeGradeSchema = z.enum(["A", "B", "C", "D", "F"]);
+export type CopyTradeGrade = z.infer<typeof copyTradeGradeSchema>;
+
+export const copyTradeConfidenceBandSchema = z.enum(["High", "Medium", "Low"]);
+export type CopyTradeConfidenceBand = z.infer<
+  typeof copyTradeConfidenceBandSchema
+>;
+
+export const copyTradeSignalStateSchema = z.enum([
+  "Strong",
+  "Moderate",
+  "Weak",
+  "Invalid",
+]);
+export type CopyTradeSignalState = z.infer<typeof copyTradeSignalStateSchema>;
+
+export const copyTradeLifecycleStateSchema = z.enum([
+  "active",
+  "inactive",
+  "reintroduced",
+]);
+export type CopyTradeLifecycleState = z.infer<
+  typeof copyTradeLifecycleStateSchema
+>;
+
+export const copyTradeSortByApiSchema = z.enum([
+  "rank_desc",
+  "rank_asc",
+  "score_desc",
+  "score_asc",
+  "momentum_desc",
+  "momentum_asc",
+  "last_seen_desc",
+  "last_seen_asc",
+]);
+export type CopyTradeSortByApi = z.infer<typeof copyTradeSortByApiSchema>;
+
+export const copyTradeTraderApiDtoSchema = z.object({
+  trader_id: z.string().min(1).catch("UNKNOWN"),
+  handle: z.string().min(1).catch("Unknown Trader"),
+  computed_rank: z.coerce.number().int().positive().catch(9_999),
+  rank_change_7d: z.coerce.number().int().catch(0),
+  grade: copyTradeGradeSchema.catch("C"),
+  signal_state: copyTradeSignalStateSchema.catch("Weak"),
+  confidence_band: copyTradeConfidenceBandSchema.catch("Medium"),
+  ema_score: z.coerce.number().min(0).max(100).catch(0),
+  score_momentum: z.coerce.number().catch(0),
+  lifecycle_state: copyTradeLifecycleStateSchema.catch("inactive"),
+  last_seen_at: z.string().datetime().catch(new Date(0).toISOString()),
+});
+export type CopyTradeTraderApiDto = z.infer<typeof copyTradeTraderApiDtoSchema>;
+
+export const copyTradeLeaderboardApiResponseSchema = z
+  .object({
+    traders: z.array(copyTradeTraderApiDtoSchema).catch([]),
+    trader_count: z.coerce.number().int().nonnegative().nullish(),
+    snapshot_id: z.string().nullish(),
+    generatedAt: z.string().datetime().nullish(),
+    snapshot_stale: z.boolean().nullish(),
+    disclaimer: z.string().nullish(),
+  })
+  .passthrough()
+  .transform((payload) => ({
+    ...payload,
+    trader_count: payload.trader_count ?? payload.traders.length,
+    snapshot_id: payload.snapshot_id ?? undefined,
+    generatedAt: payload.generatedAt ?? undefined,
+    snapshot_stale: payload.snapshot_stale ?? undefined,
+    disclaimer: payload.disclaimer ?? undefined,
+  }));
+export type CopyTradeLeaderboardApiResponse = z.infer<
+  typeof copyTradeLeaderboardApiResponseSchema
+>;
+
+export const copyTradeTraderSchema = z.object({
+  traderId: z.string().min(1),
+  handle: z.string().min(1),
+  computedRank: z.number().int().positive(),
+  rankChange7d: z.number().int(),
+  grade: copyTradeGradeSchema,
+  signalState: copyTradeSignalStateSchema,
+  confidenceBand: copyTradeConfidenceBandSchema,
+  score: z.number().min(0).max(100),
+  momentum: z.number(),
+  lifecycleState: copyTradeLifecycleStateSchema,
+  lastSeenAt: z.string().datetime(),
+});
+export type CopyTradeTrader = z.infer<typeof copyTradeTraderSchema>;
+
+export function mapCopyTradeTraderFromApiDto(
+  dto: CopyTradeTraderApiDto,
+): CopyTradeTrader {
+  return {
+    traderId: dto.trader_id,
+    handle: dto.handle,
+    computedRank: dto.computed_rank,
+    rankChange7d: dto.rank_change_7d,
+    grade: dto.grade,
+    signalState: dto.signal_state,
+    confidenceBand: dto.confidence_band,
+    score: dto.ema_score,
+    momentum: dto.score_momentum,
+    lifecycleState: dto.lifecycle_state,
+    lastSeenAt: dto.last_seen_at,
+  };
+}

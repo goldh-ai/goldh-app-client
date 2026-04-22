@@ -23,6 +23,7 @@ import {
     PanelLeftOpen,
     MoreHorizontal,
     BarChart3,
+    Trophy,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
@@ -49,6 +50,7 @@ const featuresItems = [
     { name: "Whale Watch", icon: Waves, path: "/features/whale" },
     { name: "STREETScore", icon: BarChart3, path: "/features/streetscore" },
     { name: "Arbitrage Scanner", icon: ArrowRightLeft, path: "/features/arbitrage" },
+    { name: "Copy Trade Finder", icon: Trophy, path: "/features/copytrade" },
 ];
 
 const intelligenceHubItems = [
@@ -79,6 +81,7 @@ const pathLabels: Record<string, string> = {
     "/features/guru-talk": "Guru Talk",
     "/features/streetscore": "STREETScore",
     "/features/arbitrage": "Arbitrage Scanner",
+    "/features/copytrade": "Copy Trade Finder",
     "/intelligence-hub": "Intelligence Hub",
     "/portfolio-intelligence": "Portfolio Intelligence",
     "/insights": "CIO Insights",
