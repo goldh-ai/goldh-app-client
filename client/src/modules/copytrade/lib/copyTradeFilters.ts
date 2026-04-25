@@ -2,15 +2,21 @@ export type CopyTradeFilterState = {
   grade: string;
   confidence: string;
   signal: string;
+  capacity: string;
 };
 
-export type CopyTradeFilterField = "grade" | "confidence" | "signal";
+export type CopyTradeFilterField =
+  | "grade"
+  | "confidence"
+  | "signal"
+  | "capacity";
 
 export function defaultCopyTradeFilterState(): CopyTradeFilterState {
   return {
     grade: "all",
     confidence: "all",
     signal: "all",
+    capacity: "all",
   };
 }
 
@@ -34,6 +40,9 @@ export function collectActiveCopyTradeFilters(
   }
   if (filters.signal !== "all") {
     out.push({ field: "signal", label: "Signal", value: filters.signal });
+  }
+  if (filters.capacity !== "all") {
+    out.push({ field: "capacity", label: "Capacity", value: filters.capacity });
   }
   return out;
 }

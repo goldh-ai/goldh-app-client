@@ -129,6 +129,9 @@ export {
   copyTradeConfidenceBandSchema,
   copyTradeSignalStateSchema,
   copyTradeLifecycleStateSchema,
+  copyTradeCapacityFlagSchema,
+  copyTradeHistoryRecordSchema,
+  copyTradeHistoryApiResponseSchema,
   mapCopyTradeTraderFromApiDto,
 } from "./schema";
 
@@ -141,6 +144,9 @@ export type {
   CopyTradeConfidenceBand,
   CopyTradeSignalState,
   CopyTradeLifecycleState,
+  CopyTradeCapacityFlag,
+  CopyTradeHistoryRecord,
+  CopyTradeHistoryApiResponse,
 } from "./schema";
 
 // ─── Whale Watch ──────────────────────────────────────────────────────────────

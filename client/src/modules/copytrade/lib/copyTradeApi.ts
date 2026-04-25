@@ -1,6 +1,7 @@
 import {
   copyTradeLeaderboardApiResponseSchema,
   mapCopyTradeTraderFromApiDto,
+  type CopyTradeHistoryRecord,
   type CopyTradeLeaderboardApiResponse,
   type CopyTradeTrader,
 } from "@shared/types";
@@ -9,6 +10,11 @@ import {
   buildCopyTradeDetailFromPayload,
   type CopyTradeTraderDetail,
 } from "./copyTradeDetail";
+import {
+  historyRecordsToPerformancePoints,
+  historyRecordsToScoreTrend,
+  parseCopyTradeHistoryPayload,
+} from "./copyTradeHistoryTransforms";
 
 const COPYTRADE_LEADERBOARD_PATH = "/api/copytrade/leaderboard";
 const COPYTRADE_TRADER_DETAIL_PATH = "/api/copytrade/trader";
@@ -32,13 +38,47 @@ function getAuthHeaders(): Record<string, string> {
   return sessionId ? { Authorization: `Bearer ${sessionId}` } : {};
 }
 
+export type CopyTradeLeaderboardRequest = {
+  grade?: string;
+  confidence?: string;
+  signal?: string;
+  capacity?: string;
+  pageSize?: number;
+  cursor?: string;
+  /** When backend supports server-side sort (e.g. `ema_score_desc`). */
+  sortBy?: string;
+};
+
 export type CopyTradeLeaderboardResponse = {
   traders: CopyTradeTrader[];
   raw: CopyTradeLeaderboardApiResponse;
 };
 
-export async function fetchCopyTradeLeaderboard(): Promise<CopyTradeLeaderboardResponse> {
-  const res = await fetch(apiUrl(COPYTRADE_LEADERBOARD_PATH), {
+function buildLeaderboardQueryString(
+  query?: CopyTradeLeaderboardRequest,
+): string {
+  if (!query) return "";
+  const params = new URLSearchParams();
+  if (query.grade && query.grade !== "all") params.append("grade", query.grade);
+  if (query.confidence && query.confidence !== "all")
+    params.append("confidence", query.confidence);
+  if (query.signal && query.signal !== "all")
+    params.append("signal", query.signal);
+  if (query.capacity && query.capacity !== "all")
+    params.append("capacity", query.capacity);
+  if (typeof query.pageSize === "number" && query.pageSize > 0)
+    params.set("pageSize", String(query.pageSize));
+  if (query.cursor) params.set("cursor", query.cursor);
+  if (query.sortBy) params.set("sortBy", query.sortBy);
+  const s = params.toString();
+  return s ? `?${s}` : "";
+}
+
+export async function fetchCopyTradeLeaderboard(
+  query?: CopyTradeLeaderboardRequest,
+): Promise<CopyTradeLeaderboardResponse> {
+  const qs = buildLeaderboardQueryString(query);
+  const res = await fetch(apiUrl(`${COPYTRADE_LEADERBOARD_PATH}${qs}`), {
     credentials: "include",
     headers: getAuthHeaders(),
   });
@@ -84,61 +124,10 @@ export async function fetchCopyTradeTraderDetail(
   return buildCopyTradeDetailFromPayload(json, baseTrader);
 }
 
-function toFiniteNumber(value: unknown): number | null {
-  if (typeof value === "number" && Number.isFinite(value)) return value;
-  if (typeof value === "string" && value.trim().length > 0) {
-    const parsed = Number(value);
-    if (Number.isFinite(parsed)) return parsed;
-  }
-  return null;
-}
-
-function extractHistorySeries(payload: unknown): number[] {
-  if (Array.isArray(payload)) {
-    return payload
-      .map((point) => {
-        if (typeof point === "number" || typeof point === "string") {
-          return toFiniteNumber(point);
-        }
-        if (point && typeof point === "object") {
-          const row = point as Record<string, unknown>;
-          return (
-            toFiniteNumber(row.score) ??
-            toFiniteNumber(row.ema_score) ??
-            toFiniteNumber(row.value) ??
-            toFiniteNumber(row.close) ??
-            toFiniteNumber(row.y)
-          );
-        }
-        return null;
-      })
-      .filter((n): n is number => n !== null);
-  }
-
-  if (payload && typeof payload === "object") {
-    const row = payload as Record<string, unknown>;
-    const candidates = [
-      row.history,
-      row.series,
-      row.values,
-      row.points,
-      row.data,
-      row.items,
-      row.trend,
-    ];
-    for (const candidate of candidates) {
-      const parsed = extractHistorySeries(candidate);
-      if (parsed.length > 0) return parsed;
-    }
-  }
-
-  return [];
-}
-
 export async function fetchCopyTradeTraderHistory(
   traderId: string,
-  days: 30 | 90,
-): Promise<number[]> {
+  days: 30 | 90 | 365,
+): Promise<CopyTradeHistoryRecord[]> {
   const res = await fetch(
     apiUrl(
       `${COPYTRADE_TRADER_HISTORY_PATH}/${encodeURIComponent(traderId)}?days=${days}`,
@@ -155,5 +144,52 @@ export async function fetchCopyTradeTraderHistory(
   }
 
   const json: unknown = await res.json();
-  return extractHistorySeries(json);
+  return parseCopyTradeHistoryPayload(json);
+}
+
+/** Maps live history rows into chart-ready structures merged onto trader detail. */
+export function mergeCopyTradeHistoryIntoDetail(
+  detail: CopyTradeTraderDetail,
+  records30: CopyTradeHistoryRecord[],
+  records90: CopyTradeHistoryRecord[],
+  records365: CopyTradeHistoryRecord[],
+): CopyTradeTraderDetail {
+  const has30 = records30.length > 0;
+  const has90 = records90.length > 0;
+  const has365 = records365.length > 0;
+
+  const scoreTrend30 = has30
+    ? historyRecordsToScoreTrend(records30, "ema_score")
+    : undefined;
+  const scoreTrend90 = has90
+    ? historyRecordsToScoreTrend(records90, "ema_score")
+    : undefined;
+  const scoreTrend365 = has365
+    ? historyRecordsToScoreTrend(records365, "ema_score")
+    : scoreTrend90;
+
+  const performance30 = has30
+    ? historyRecordsToPerformancePoints(records30)
+    : undefined;
+  const performance90 = has90
+    ? historyRecordsToPerformancePoints(records90)
+    : undefined;
+  const performance365 = has365
+    ? historyRecordsToPerformancePoints(records365)
+    : performance90;
+
+  const emaSeries30 = has30 ? records30.map((r) => r.ema_score) : [];
+  const emaSeries90 = has90 ? records90.map((r) => r.ema_score) : [];
+
+  return {
+    ...detail,
+    scoreTrend30,
+    scoreTrend90,
+    scoreTrend365,
+    performance30,
+    performance90,
+    performance365,
+    history30d: emaSeries30.length >= 2 ? emaSeries30 : detail.history30d,
+    history90d: emaSeries90.length >= 2 ? emaSeries90 : detail.history90d,
+  };
 }

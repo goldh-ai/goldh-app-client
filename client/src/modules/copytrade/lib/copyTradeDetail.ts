@@ -1,17 +1,42 @@
 import type { CopyTradeTrader } from "@shared/types";
+import type {
+  CopyTradePerformancePoint,
+  CopyTradeScoreTrendPoint,
+} from "./copyTradeHistoryTransforms";
 
 export type CopyTradeMetric = {
   label: string;
   value: string;
 };
 
+/** Present when `/trader/:id` includes risk_level (Low / Medium / High). */
+export type CopyTradeRiskLevel = "Low" | "Medium" | "High";
+
 export type CopyTradeTraderDetail = CopyTradeTrader & {
   summary?: string;
   subscores: CopyTradeMetric[];
   vendorMetrics: CopyTradeMetric[];
   flags: string[];
+  /** Legacy numeric series (EMA); still used as fallback when history API fails. */
   history30d: number[];
   history90d: number[];
+  riskLevel?: CopyTradeRiskLevel | null;
+  emaSnapshot?: number | null;
+  rawSnapshot?: number | null;
+  scoreTrend30?: CopyTradeScoreTrendPoint[];
+  scoreTrend90?: CopyTradeScoreTrendPoint[];
+  scoreTrend365?: CopyTradeScoreTrendPoint[];
+  performance30?: CopyTradePerformancePoint[];
+  performance90?: CopyTradePerformancePoint[];
+  performance365?: CopyTradePerformancePoint[];
+  maxDrawdownPct?: number | null;
+  winRatePct?: number | null;
+  strategyLabel?: string | null;
+  totalTradesProfile?: number | null;
+  monthsActiveProfile?: number | null;
+  avgTradesPerMonth?: number | null;
+  behavioralTags?: string[];
+  generatedAt?: string | null;
 };
 
 type UnknownRecord = Record<string, unknown>;
@@ -47,6 +72,24 @@ function readNumber(
   return undefined;
 }
 
+/** Returns `null` when the API explicitly sent JSON `null`. */
+function readNullableInt(
+  record: UnknownRecord,
+  ...keys: string[]
+): number | null | undefined {
+  for (const key of keys) {
+    if (!Object.prototype.hasOwnProperty.call(record, key)) continue;
+    const raw = record[key];
+    if (raw === null) return null;
+    if (typeof raw === "number" && Number.isFinite(raw)) return Math.trunc(raw);
+    if (typeof raw === "string" && raw.trim().length > 0) {
+      const parsed = Number(raw);
+      if (Number.isFinite(parsed)) return Math.trunc(parsed);
+    }
+  }
+  return undefined;
+}
+
 function titleCaseFromSnake(name: string): string {
   return name.replace(/_/g, " ").replace(/\b\w/g, (c) => c.toUpperCase());
 }
@@ -75,6 +118,23 @@ function pickMetrics(
     }));
 }
 
+function subscoresFromSubScoresBlock(obj: unknown): CopyTradeMetric[] {
+  if (!obj || typeof obj !== "object") return [];
+  const rec = obj as UnknownRecord;
+  return Object.entries(rec)
+    .filter(
+      ([k, v]) =>
+        (k.endsWith("_score") || k.endsWith("_penalty")) &&
+        typeof v === "number" &&
+        Number.isFinite(v),
+    )
+    .slice(0, 12)
+    .map(([key, value]) => ({
+      label: titleCaseFromSnake(key),
+      value: fmtMetricValue(value),
+    }));
+}
+
 function toNumberArray(value: unknown): number[] {
   if (!Array.isArray(value)) return [];
   return value
@@ -83,22 +143,6 @@ function toNumberArray(value: unknown): number[] {
     )
     .filter((n) => Number.isFinite(n))
     .map((n) => Number(n));
-}
-
-function buildSyntheticHistory(
-  baseScore: number,
-  momentum: number,
-  points: number,
-): number[] {
-  const series: number[] = [];
-  for (let i = 0; i < points; i++) {
-    const phase = i / Math.max(1, points - 1);
-    const drift = (phase - 0.5) * momentum * 1.1;
-    const wave = Math.sin(i * 0.65) * 1.4 + Math.cos(i * 0.21) * 0.7;
-    const value = Math.max(0, Math.min(100, baseScore - drift + wave));
-    series.push(Number(value.toFixed(2)));
-  }
-  return series;
 }
 
 function normalizeEnum<T extends readonly string[]>(
@@ -112,6 +156,12 @@ function normalizeEnum<T extends readonly string[]>(
     : fallback;
 }
 
+function normalizeWinRateToPct(value: unknown): number | null {
+  if (typeof value !== "number" || !Number.isFinite(value)) return null;
+  if (value >= 0 && value <= 1) return Math.round(value * 1000) / 10;
+  return Math.round(value * 10) / 10;
+}
+
 export function buildCopyTradeDetailFromPayload(
   payload: unknown,
   baseTrader?: CopyTradeTrader,
@@ -119,6 +169,7 @@ export function buildCopyTradeDetailFromPayload(
   const root = asRecord(payload);
   const nested = asRecord(root.trader);
   const source = { ...root, ...nested };
+  const rawMetrics = asRecord(source.raw_metrics ?? {});
 
   const traderId =
     readString(source, "trader_id", "traderId") ??
@@ -126,6 +177,7 @@ export function buildCopyTradeDetailFromPayload(
     "UNKNOWN";
   const handle =
     readString(source, "handle", "display_name") ??
+    readString(rawMetrics, "handle") ??
     baseTrader?.handle ??
     "Unknown Trader";
   const computedRank =
@@ -133,17 +185,30 @@ export function buildCopyTradeDetailFromPayload(
     baseTrader?.computedRank ??
     9_999;
   const rankChange7d =
-    readNumber(source, "rank_change_7d", "rankChange7d", "rank_change") ??
+    readNullableInt(source, "rank_change_7d", "rankChange7d", "rank_change") ??
     baseTrader?.rankChange7d ??
-    0;
+    null;
   const score =
     readNumber(source, "ema_score", "score", "emaScore") ??
     baseTrader?.score ??
     0;
+  const rawSnapshot =
+    readNumber(source, "raw_score", "rawScore") ??
+    readNumber(rawMetrics, "raw_score") ??
+    null;
+  const emaSnapshot = readNumber(source, "ema_score", "emaScore") ?? null;
   const momentum =
     readNumber(source, "score_momentum", "momentum", "scoreMomentum") ??
     baseTrader?.momentum ??
     0;
+  const generatedAt =
+    readString(
+      source,
+      "generatedAt",
+      "generated_at",
+      "fetched_at",
+      "fetchedAt",
+    ) ?? null;
   const lastSeenAt =
     readString(
       source,
@@ -152,6 +217,7 @@ export function buildCopyTradeDetailFromPayload(
       "updated_at",
       "created_at",
     ) ??
+    generatedAt ??
     baseTrader?.lastSeenAt ??
     new Date(0).toISOString();
 
@@ -176,26 +242,68 @@ export function buildCopyTradeDetailFromPayload(
     baseTrader?.lifecycleState ?? "inactive",
   );
 
-  const summary =
-    readString(
-      source,
-      "summary",
-      "explanation",
-      "explanation_summary",
-      "disclaimer",
-    ) ?? `Trader profile intelligence for ${handle}.`;
+  const riskRaw = readString(source, "risk_level", "riskLevel");
+  const explicitRisk: CopyTradeRiskLevel | null =
+    riskRaw &&
+    (["Low", "Medium", "High"] as const).includes(riskRaw as CopyTradeRiskLevel)
+      ? (riskRaw as CopyTradeRiskLevel)
+      : null;
 
-  const subscores = pickMetrics(
-    source,
-    (key) => key.endsWith("_score") || key.endsWith("_rank"),
-  );
+  const maxDrawdownPct =
+    readNumber(rawMetrics, "max_drawdown_pct") ??
+    readNumber(source, "max_drawdown_pct") ??
+    null;
+  const winRatePct =
+    normalizeWinRateToPct(rawMetrics.win_rate_pct) ??
+    normalizeWinRateToPct(rawMetrics.win_rate) ??
+    null;
+  const totalTradesProfile =
+    readNumber(rawMetrics, "total_trades") ??
+    readNumber(source, "total_trades") ??
+    null;
+  const monthsActiveProfile =
+    readNumber(rawMetrics, "months_active") ??
+    readNumber(source, "months_active") ??
+    null;
+  const avgTradesPerMonth =
+    readNumber(rawMetrics, "avg_trades_per_month") ?? null;
+  const profileTag =
+    readString(source, "profile_tag", "profileTag", "strategy_type") ?? null;
+  const capacityFlagRaw = readString(source, "capacity_flag", "capacityFlag");
+  const capacityFlag =
+    capacityFlagRaw === "Low" ||
+    capacityFlagRaw === "Medium" ||
+    capacityFlagRaw === "High"
+      ? capacityFlagRaw
+      : null;
+
+  const riskLevel = explicitRisk;
+
+  const ses = asRecord(source.score_explanation_summary ?? {});
+  const signalReason = readString(ses, "signal_reason");
+  const confidenceReason = readString(ses, "confidence_reason");
+  const summary =
+    ([signalReason, confidenceReason].filter(Boolean).join(" · ") ||
+      readString(
+        source,
+        "summary",
+        "explanation",
+        "explanation_summary",
+        "disclaimer",
+      )) ??
+    `Trader profile intelligence for ${handle}.`;
+
+  const subscoresBlock = source.sub_scores ?? source.subScores;
+  const subscoresFromBlock = subscoresFromSubScoresBlock(subscoresBlock);
+  const subscores = subscoresFromBlock;
+
   const vendorMetrics = pickMetrics(
     source,
     (key) =>
       key.includes("vendor") ||
-      key.includes("updated") ||
-      key.includes("created") ||
-      key.includes("snapshot"),
+      key.includes("snapshot") ||
+      key === "model_version" ||
+      key === "compute_hash",
   );
   const flags = Object.entries(source)
     .filter(
@@ -218,14 +326,13 @@ export function buildCopyTradeDetailFromPayload(
       : toNumberArray(source.history90d).length > 0
         ? toNumberArray(source.history90d)
         : toNumberArray(source.score_history_90d);
-  const history30d =
-    history30dRaw.length >= 8
-      ? history30dRaw
-      : buildSyntheticHistory(score, momentum, 30);
-  const history90d =
-    history90dRaw.length >= 12
-      ? history90dRaw
-      : buildSyntheticHistory(score, momentum * 0.8, 90);
+  const history30d = history30dRaw;
+  const history90d = history90dRaw;
+
+  const tagsRaw = source.behavioral_tags ?? source.behavioralTags;
+  const behavioralTags = Array.isArray(tagsRaw)
+    ? tagsRaw.filter((t): t is string => typeof t === "string").slice(0, 12)
+    : [];
 
   return {
     traderId,
@@ -237,13 +344,26 @@ export function buildCopyTradeDetailFromPayload(
     confidenceBand,
     score,
     momentum,
+    profileTag,
+    capacityFlag,
     lifecycleState,
     lastSeenAt,
+    riskLevel,
+    emaSnapshot,
+    rawSnapshot,
     summary,
     subscores,
     vendorMetrics,
     flags,
     history30d,
     history90d,
+    maxDrawdownPct,
+    winRatePct,
+    strategyLabel: profileTag,
+    totalTradesProfile,
+    monthsActiveProfile,
+    avgTradesPerMonth,
+    behavioralTags,
+    generatedAt,
   };
 }

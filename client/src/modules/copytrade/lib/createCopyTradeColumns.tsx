@@ -5,6 +5,11 @@ import {
   institutionalTableSortGlyphActiveClass,
   institutionalTableSortGlyphMutedClass,
   institutionalTableSortHeaderButtonClass,
+  institutionalTableCellInnerCenterClass,
+  institutionalTableCellInnerLeftClass,
+  institutionalTableCellMonoClass,
+  institutionalTableEntityTextClass,
+  institutionalTableCellTextClass,
 } from "@/lib/institutionalDataChrome";
 import { cn } from "@/lib/utils";
 import {
@@ -13,12 +18,13 @@ import {
   copyTradeTableColumnIdForSortBy,
 } from "./copyTradeSort";
 import {
+  CopyTradeCapacityBadge,
   CopyTradeConfidenceBadge,
   CopyTradeGradeBadge,
   CopyTradeSignalBadge,
-  CopyTradeStatusBadge,
 } from "./copyTradeBadges";
-import { fmtCopyTradeMomentum, fmtCopyTradeScore, fmtCopyTradeUpdated } from "./copyTradeFormat";
+import { CopyTradeRecommendedActionBadge } from "../components/CopyTradeRecommendedActionBadge";
+import { fmtCopyTradeMomentum, fmtCopyTradeScore } from "./copyTradeFormat";
 
 const columnHelper = createColumnHelper<CopyTradeTrader>();
 
@@ -140,13 +146,13 @@ export function createCopyTradeColumns(
           type="button"
           onClick={() => onSelectTrader?.(row.original.traderId)}
           className={cn(
-            "w-full min-w-[10rem] rounded-md px-2 py-1.5 text-left outline-none transition focus-visible:ring-1 focus-visible:ring-[#C7AE6A]/60",
+            "flex min-h-10 w-full min-w-[7.25rem] flex-col items-start justify-center rounded-md px-1 py-1 text-left outline-none transition focus-visible:ring-1 focus-visible:ring-primary/60",
             selectedTraderId === row.original.traderId &&
-            "bg-[#C7AE6A]/12",
+            "bg-primary/12",
           )}
         >
-          <p className="font-semibold leading-tight text-foreground">{row.original.handle}</p>
-          <p className="mt-1 inline-flex rounded-sm border border-[#2d2716] bg-[#15120a] px-1.5 py-0.5 font-mono text-[10px] uppercase tracking-wide text-[#d4bf86]">
+          <p className={cn("truncate leading-tight", institutionalTableEntityTextClass)}>{row.original.handle}</p>
+          <p className="mt-0.5 inline-flex rounded-sm border border-primary/30 bg-primary/10 px-1 py-0.5 font-mono text-xs uppercase tracking-wide text-primary/90">
             {row.original.traderId}
           </p>
         </button>
@@ -167,18 +173,12 @@ export function createCopyTradeColumns(
         />
       ),
       enableSorting: true,
-      cell: (info) => <p className="text-center font-mono text-sm">#{info.getValue()}</p>,
-      meta: { arbHeadClass: "min-w-[5.5rem]", arbCellClass: "min-w-[5.5rem]" },
-    }),
-    columnHelper.accessor("rankChange7d", {
-      header: () => <StaticHeader label="Rank ↑ 7d" align="center" />,
-      enableSorting: false,
-      cell: (info) => {
-        const value = info.getValue();
-        const tone = value > 0 ? "text-chart-4" : value < 0 ? "text-destructive" : "text-muted-foreground";
-        return <p className={cn("text-center font-mono text-sm", tone)}>{value > 0 ? `+${value}` : value}</p>;
-      },
-      meta: { arbHeadClass: "min-w-[6rem]", arbCellClass: "min-w-[6rem]" },
+      cell: (info) => (
+        <div className={institutionalTableCellInnerCenterClass}>
+          <p className={institutionalTableCellMonoClass}>#{info.getValue()}</p>
+        </div>
+      ),
+      meta: { arbHeadClass: "min-w-[4.75rem]", arbCellClass: "min-w-[4.75rem]" },
     }),
     columnHelper.accessor("score", {
       header: ({ column }) => (
@@ -194,8 +194,89 @@ export function createCopyTradeColumns(
         />
       ),
       enableSorting: true,
-      cell: (info) => <p className="text-center font-mono text-sm">{fmtCopyTradeScore(info.getValue())}</p>,
+      cell: (info) => (
+        <div className={institutionalTableCellInnerCenterClass}>
+          <p className={institutionalTableCellMonoClass}>{fmtCopyTradeScore(info.getValue())}</p>
+        </div>
+      ),
+      meta: { arbHeadClass: "min-w-[4.5rem]", arbCellClass: "min-w-[4.5rem]" },
+    }),
+    columnHelper.accessor("grade", {
+      header: () => <StaticHeader label="Grade" align="center" />,
+      enableSorting: false,
+      cell: (info) => (
+        <div className={institutionalTableCellInnerCenterClass}>
+          <CopyTradeGradeBadge grade={info.getValue()} />
+        </div>
+      ),
+      meta: { arbHeadClass: "min-w-[4.75rem]", arbCellClass: "min-w-[4.75rem]" },
+    }),
+    columnHelper.accessor("confidenceBand", {
+      header: () => <StaticHeader label="Confidence" align="center" />,
+      enableSorting: false,
+      cell: (info) => (
+        <div className={institutionalTableCellInnerCenterClass}>
+          <CopyTradeConfidenceBadge band={info.getValue()} />
+        </div>
+      ),
       meta: { arbHeadClass: "min-w-[5rem]", arbCellClass: "min-w-[5rem]" },
+    }),
+    columnHelper.accessor("signalState", {
+      header: () => <StaticHeader label="Signal" align="center" />,
+      enableSorting: false,
+      cell: (info) => (
+        <div className={institutionalTableCellInnerCenterClass}>
+          <CopyTradeSignalBadge state={info.getValue()} />
+        </div>
+      ),
+      meta: { arbHeadClass: "min-w-[5rem]", arbCellClass: "min-w-[5rem]" },
+    }),
+    columnHelper.display({
+      id: "recommendedAction",
+      header: () => (
+        <StaticHeader label="Action" align="center" />
+      ),
+      cell: ({ row }) => (
+        <div className={cn(institutionalTableCellInnerCenterClass, "px-0.5")}>
+          <CopyTradeRecommendedActionBadge
+            grade={row.original.grade}
+            confidenceBand={row.original.confidenceBand}
+            size="compact"
+            onActivate={
+              onSelectTrader
+                ? () => onSelectTrader(row.original.traderId)
+                : undefined
+            }
+          />
+        </div>
+      ),
+      meta: {
+        arbHeadClass: "min-w-[6rem]",
+        arbCellClass: "min-w-[6rem]",
+      },
+    }),
+    columnHelper.accessor("rankChange7d", {
+      header: () => <StaticHeader label="Rank ↑ 7d" align="center" />,
+      enableSorting: false,
+      cell: (info) => {
+        const value = info.getValue();
+        if (value === null) {
+          return (
+            <div className={institutionalTableCellInnerCenterClass}>
+              <p className={cn(institutionalTableCellTextClass, "text-sm")} title="Not available">
+                —
+              </p>
+            </div>
+          );
+        }
+        const tone = value > 0 ? "text-chart-4" : value < 0 ? "text-destructive" : "text-muted-foreground";
+        return (
+          <div className={institutionalTableCellInnerCenterClass}>
+            <p className={cn(institutionalTableCellMonoClass, tone)}>{value > 0 ? `+${value}` : value}</p>
+          </div>
+        );
+      },
+      meta: { arbHeadClass: "min-w-[4.75rem]", arbCellClass: "min-w-[4.75rem]" },
     }),
     columnHelper.accessor("momentum", {
       header: ({ column }) => (
@@ -211,50 +292,34 @@ export function createCopyTradeColumns(
         />
       ),
       enableSorting: true,
-      cell: (info) => <p className="text-center font-mono text-sm">{fmtCopyTradeMomentum(info.getValue())}</p>,
-      meta: { arbHeadClass: "min-w-[6rem]", arbCellClass: "min-w-[6rem]" },
-    }),
-    columnHelper.accessor("grade", {
-      header: () => <StaticHeader label="Grade" align="center" />,
-      enableSorting: false,
-      cell: (info) => <CopyTradeGradeBadge grade={info.getValue()} />,
-      meta: { arbHeadClass: "min-w-[5.75rem]", arbCellClass: "min-w-[5.75rem]" },
-    }),
-    columnHelper.accessor("confidenceBand", {
-      header: () => <StaticHeader label="Confidence" align="center" />,
-      enableSorting: false,
-      cell: (info) => <CopyTradeConfidenceBadge band={info.getValue()} />,
-      meta: { arbHeadClass: "min-w-[6.25rem]", arbCellClass: "min-w-[6.25rem]" },
-    }),
-    columnHelper.accessor("signalState", {
-      header: () => <StaticHeader label="Signal" align="center" />,
-      enableSorting: false,
-      cell: (info) => <CopyTradeSignalBadge state={info.getValue()} />,
-      meta: { arbHeadClass: "min-w-[6.25rem]", arbCellClass: "min-w-[6.25rem]" },
-    }),
-    columnHelper.accessor("lifecycleState", {
-      header: () => <StaticHeader label="Status" align="center" />,
-      enableSorting: false,
-      cell: (info) => <CopyTradeStatusBadge status={info.getValue()} />,
-      meta: { arbHeadClass: "min-w-[7rem]", arbCellClass: "min-w-[7rem]" },
-    }),
-    columnHelper.accessor("lastSeenAt", {
-      id: "lastSeenAt",
-      header: ({ column }) => (
-        <ServerSortHeader
-          label="Last Seen"
-          column={column}
-          onSortByChange={onSortByChange}
-          sortBy={sortBy}
-          sortAsc={COPYTRADE_SORT_BY.LAST_SEEN_ASC}
-          sortDesc={COPYTRADE_SORT_BY.LAST_SEEN_DESC}
-          columnId="lastSeenAt"
-          align="right"
-        />
+      cell: (info) => (
+        <div className={institutionalTableCellInnerCenterClass}>
+          <p className={institutionalTableCellMonoClass}>{fmtCopyTradeMomentum(info.getValue())}</p>
+        </div>
       ),
-      enableSorting: true,
-      cell: (info) => <p className="text-right font-mono text-xs">{fmtCopyTradeUpdated(info.getValue())}</p>,
-      meta: { arbHeadClass: "min-w-[6.25rem]", arbCellClass: "min-w-[6.25rem]" },
+      meta: { arbHeadClass: "min-w-[4.75rem]", arbCellClass: "min-w-[4.75rem]" },
+    }),
+    columnHelper.accessor("profileTag", {
+      header: () => <StaticHeader label="Profile" align="center" />,
+      enableSorting: false,
+      cell: (info) => (
+        <div className={institutionalTableCellInnerCenterClass}>
+          <p className="w-full truncate text-center text-xs font-medium uppercase tracking-wide text-muted-foreground">
+            {info.getValue() ?? "General"}
+          </p>
+        </div>
+      ),
+      meta: { arbHeadClass: "min-w-[5.25rem]", arbCellClass: "min-w-[5.25rem]" },
+    }),
+    columnHelper.accessor("capacityFlag", {
+      header: () => <StaticHeader label="Capacity" align="center" />,
+      enableSorting: false,
+      cell: (info) => (
+        <div className={institutionalTableCellInnerCenterClass}>
+          <CopyTradeCapacityBadge capacity={info.getValue()} />
+        </div>
+      ),
+      meta: { arbHeadClass: "min-w-[5.25rem]", arbCellClass: "min-w-[5.25rem]" },
     }),
   ] as ColumnDef<CopyTradeTrader>[];
 }

@@ -12,6 +12,8 @@ function makeMockTrader(index: number): CopyTradeTraderApiDto {
   const lifecycle = lifecycleStates[index % lifecycleStates.length];
   const computedRank = index + 1;
 
+  const riskLevels = ["Low", "Medium", "High"] as const;
+
   return {
     trader_id: `T${String(computedRank).padStart(4, "0")}`,
     handle: `Trader_${computedRank}`,
@@ -20,6 +22,7 @@ function makeMockTrader(index: number): CopyTradeTraderApiDto {
     grade,
     signal_state: signal,
     confidence_band: confidence,
+    risk_level: riskLevels[index % riskLevels.length],
     ema_score: Math.max(0, Math.min(100, 96 - index * 0.45)),
     score_momentum: Number((((index % 9) - 4) * 0.42).toFixed(2)),
     lifecycle_state: lifecycle,

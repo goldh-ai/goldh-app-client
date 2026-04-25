@@ -1,6 +1,6 @@
 import { useMemo } from "react";
 import { useQuery } from "@tanstack/react-query";
-import type { CopyTradeSortByApi, PlanTier } from "@shared/types";
+import type { CopyTradeSortByApi } from "@shared/types";
 import { isCopyTradeMockEnabled } from "@/lib/copyTradeMock";
 import { fetchCopyTradeLeaderboard } from "../lib/copyTradeApi";
 import { sortCopyTradeTradersForDisplay } from "../lib/copyTradeSort";
@@ -10,8 +10,10 @@ type UseCopyTradeTradersArgs = {
   grade: string;
   confidence: string;
   signal: string;
+  capacity: string;
   sortBy: CopyTradeSortByApi;
-  planTier?: PlanTier | null;
+  pageSize: number;
+  cursor?: string | null;
 };
 
 function matchesFilter(value: string, filter: string): boolean {
@@ -35,33 +37,69 @@ export function useCopyTradeTraders(args: UseCopyTradeTradersArgs) {
   });
 
   const apiQuery = useQuery({
-    queryKey: ["copytrade", "v1", "leaderboard"],
-    queryFn: fetchCopyTradeLeaderboard,
+    queryKey: [
+      "copytrade",
+      "v1",
+      "leaderboard",
+      args.grade,
+      args.confidence,
+      args.signal,
+      args.capacity,
+      args.sortBy,
+      args.pageSize,
+      args.cursor ?? null,
+    ],
+    queryFn: () =>
+      fetchCopyTradeLeaderboard({
+        grade: args.grade,
+        confidence: args.confidence,
+        signal: args.signal,
+        capacity: args.capacity,
+        sortBy: args.sortBy,
+        pageSize: args.pageSize,
+        cursor: args.cursor ?? undefined,
+      }),
     enabled: args.enabled && !mockEnabled,
     retry: 2,
   });
 
-  const sourceRows = useMemo(() => {
-    if (mockEnabled) return mockQuery.data ?? [];
-    return apiQuery.data?.traders ?? [];
-  }, [mockEnabled, mockQuery.data, apiQuery.data]);
-
-  const filteredRows = useMemo(() => {
-    const rows = sourceRows.filter(
+  const mockRows = useMemo(() => {
+    const rows = (mockQuery.data ?? []).filter(
       (row) =>
         matchesFilter(row.grade, args.grade) &&
         matchesFilter(row.confidenceBand, args.confidence) &&
-        matchesFilter(row.signalState, args.signal),
+        matchesFilter(row.signalState, args.signal) &&
+        (args.capacity === "all" || row.capacityFlag === args.capacity),
     );
     return sortCopyTradeTradersForDisplay(rows, args.sortBy);
-  }, [sourceRows, args.grade, args.confidence, args.signal, args.sortBy]);
+  }, [
+    mockQuery.data,
+    args.grade,
+    args.confidence,
+    args.signal,
+    args.capacity,
+    args.sortBy,
+  ]);
 
-  const withTierCap = useMemo(() => {
-    // Mock mode is intentionally uncapped for UI development realism.
-    if (mockEnabled) return filteredRows;
-    if (args.planTier === "free") return filteredRows.slice(0, 10);
-    return filteredRows;
-  }, [mockEnabled, args.planTier, filteredRows]);
+  const serverRows = apiQuery.data?.traders ?? [];
+  const serverRaw = apiQuery.data?.raw;
+  const traders = mockEnabled ? mockRows : serverRows;
+  const totalAvailable = mockEnabled
+    ? mockRows.length
+    : (serverRaw?.trader_count ?? serverRaw?.meta?.total ?? serverRows.length);
+  const nextCursor = mockEnabled
+    ? undefined
+    : (serverRaw?.pagination?.nextCursor ?? undefined);
+  const hasMore = mockEnabled
+    ? false
+    : Boolean(
+        serverRaw?.pagination?.hasMore ??
+        (serverRaw?.pagination?.nextCursor &&
+          serverRaw.pagination.nextCursor.length > 0),
+      );
+  const tierRestricted = mockEnabled
+    ? false
+    : Boolean(serverRaw?.meta?.tier_restricted);
 
   const isLoading = mockEnabled ? mockQuery.isLoading : apiQuery.isLoading;
   const isFetching = mockEnabled ? mockQuery.isFetching : apiQuery.isFetching;
@@ -70,8 +108,11 @@ export function useCopyTradeTraders(args: UseCopyTradeTradersArgs) {
   const refetch = mockEnabled ? mockQuery.refetch : apiQuery.refetch;
 
   return {
-    traders: withTierCap,
-    totalAvailable: sourceRows.length,
+    traders,
+    totalAvailable,
+    nextCursor,
+    hasMore,
+    tierRestricted,
     isLoading,
     isFetching,
     isError,

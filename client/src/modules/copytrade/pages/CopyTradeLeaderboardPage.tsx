@@ -1,13 +1,11 @@
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import type { SortingState } from "@tanstack/react-table";
-import type { PlanTier } from "@shared/types";
-import { Trophy, WifiOff, UserRoundCheck } from "lucide-react";
+import { Trophy } from "lucide-react";
 import { AppLayout } from "@/components/AppLayout";
 import { ActiveFilterChips, type FilterChip } from "@/components/shared/ActiveFilterChips";
 import { BaseTable } from "@/components/shared/BaseTable";
 import { NumberedPager } from "@/components/shared/NumberedPager";
 import { PageHeader } from "@/components/shared/PageHeader";
-import { Button } from "@/components/ui/button";
 import { useAuth } from "@/lib/auth";
 import {
   collectActiveCopyTradeFilters,
@@ -24,6 +22,7 @@ import {
   COPYTRADE_DEFAULT_SORT_BY,
   copyTradeTableColumnIdForSortBy,
 } from "../lib/copyTradeSort";
+import { fetchCopyTradeLeaderboard } from "../lib/copyTradeApi";
 import { useCopyTradeTraders } from "../hooks/useCopyTradeTraders";
 import {
   CopyTradeFiltersToolbar,
@@ -31,68 +30,109 @@ import {
 } from "../components/CopyTradeFiltersToolbar";
 import { useCopyTradeTraderDetail } from "../hooks/useCopyTradeTraderDetail";
 import { CopyTradeDetailPanel } from "../components/CopyTradeDetailPanel";
-
-function normalizePlanTier(value: string | null | undefined): PlanTier | null {
-  if (
-    value === "free" ||
-    value === "essential" ||
-    value === "pro" ||
-    value === "elite" ||
-    value === "admin"
-  ) {
-    return value;
-  }
-  return null;
-}
+import {
+  LeaderboardInlineError,
+  LeaderboardSectionTitle,
+  LeaderboardTableError,
+} from "./copyTradeLeaderboardPage/index";
 
 export default function CopyTradeLeaderboardPage() {
   const { user } = useAuth();
   const [grade, setGrade] = useState<string>("all");
   const [confidence, setConfidence] = useState<string>("all");
   const [signal, setSignal] = useState<string>("all");
+  const [capacity, setCapacity] = useState<string>("all");
   const [sortBy, setSortBy] = useState(COPYTRADE_DEFAULT_SORT_BY);
   const [perPage, setPerPage] = useState<number>(COPYTRADE_API_PAGE_SIZE);
   const [pageIndex, setPageIndex] = useState(0);
+  const [cursorByPage, setCursorByPage] = useState<Record<number, string | null>>({
+    0: null,
+  });
+  const [isJumpingForward, setIsJumpingForward] = useState(false);
   const [selectedTraderId, setSelectedTraderId] = useState<string | null>(null);
   const [isDetailOpen, setIsDetailOpen] = useState(false);
+  const currentCursor = cursorByPage[pageIndex] ?? null;
+  const walkArgsRef = useRef({
+    grade: "all",
+    confidence: "all",
+    signal: "all",
+    capacity: "all",
+    sortBy: COPYTRADE_DEFAULT_SORT_BY,
+    pageSize: COPYTRADE_API_PAGE_SIZE,
+  });
 
   const filterState: CopyTradeFilterState = useMemo(
-    () => ({ grade, confidence, signal }),
-    [grade, confidence, signal],
+    () => ({ grade, confidence, signal, capacity }),
+    [grade, confidence, signal, capacity],
   );
 
-  const { traders, totalAvailable, isLoading, isFetching, isError, error, refetch, mockEnabled } =
+  const {
+    traders,
+    totalAvailable,
+    nextCursor,
+    hasMore,
+    tierRestricted,
+    isLoading,
+    isFetching,
+    isError,
+    error,
+    refetch,
+    mockEnabled,
+  } =
     useCopyTradeTraders({
       enabled: Boolean(user),
       grade,
       confidence,
       signal,
+      capacity,
       sortBy,
-      planTier: normalizePlanTier(user?.planTier),
+      pageSize: perPage,
+      cursor: currentCursor,
     });
 
-  const totalCount = traders.length;
+  const totalCount = totalAvailable;
   const pageCount = Math.max(1, Math.ceil(totalCount / perPage));
-
   const clampedPageIndex = Math.min(pageIndex, pageCount - 1);
-  const pagedRows = useMemo(() => {
-    const start = clampedPageIndex * perPage;
-    return traders.slice(start, start + perPage);
-  }, [traders, clampedPageIndex, perPage]);
-
-  const from = totalCount === 0 ? 0 : clampedPageIndex * perPage + 1;
-  const to = Math.min((clampedPageIndex + 1) * perPage, totalCount);
+  const from = totalCount === 0 ? 0 : pageIndex * perPage + 1;
+  const to = totalCount === 0 ? 0 : Math.min(from + traders.length - 1, totalCount);
   const selectedTrader = useMemo(
     () => traders.find((trader) => trader.traderId === selectedTraderId),
     [traders, selectedTraderId],
   );
 
   useEffect(() => {
-    if (selectedTraderId) return;
-    if (traders.length === 0) return;
-    setSelectedTraderId(traders[0].traderId);
-    setIsDetailOpen(true);
-  }, [traders, selectedTraderId]);
+    if (!nextCursor || !hasMore) return;
+    setCursorByPage((prev) => {
+      const nextPage = pageIndex + 1;
+      if (prev[nextPage] === nextCursor) return prev;
+      return { ...prev, [nextPage]: nextCursor };
+    });
+  }, [pageIndex, nextCursor, hasMore]);
+
+  useEffect(() => {
+    walkArgsRef.current = {
+      grade,
+      confidence,
+      signal,
+      capacity,
+      sortBy,
+      pageSize: perPage,
+    };
+  }, [grade, confidence, signal, capacity, sortBy, perPage]);
+
+  useEffect(() => {
+    if (isFetching || isLoading || isError) return;
+    if (totalCount === 0 && cursorByPage[pageIndex] != null) return;
+    if (clampedPageIndex !== pageIndex) setPageIndex(clampedPageIndex);
+  }, [
+    clampedPageIndex,
+    pageIndex,
+    isFetching,
+    isLoading,
+    isError,
+    totalCount,
+    cursorByPage,
+  ]);
 
   const {
     detail: selectedTraderDetail,
@@ -104,10 +144,12 @@ export default function CopyTradeLeaderboardPage() {
     history90,
     history30Error,
     history90Error,
+    history365Error,
+    isFetching: isDetailHistoryFetching,
   } = useCopyTradeTraderDetail({
     traderId: selectedTraderId,
     baseTrader: selectedTrader,
-    enabled: Boolean(user),
+    enabled: Boolean(user) && Boolean(selectedTraderId),
   });
 
   const activeFilters: FilterChip[] = useMemo(
@@ -119,7 +161,9 @@ export default function CopyTradeLeaderboardPage() {
           if (field === "grade") setGrade("all");
           if (field === "confidence") setConfidence("all");
           if (field === "signal") setSignal("all");
+          if (field === "capacity") setCapacity("all");
           setPageIndex(0);
+          setCursorByPage({ 0: null });
         },
       })),
     [filterState],
@@ -130,9 +174,11 @@ export default function CopyTradeLeaderboardPage() {
     setGrade(defaults.grade);
     setConfidence(defaults.confidence);
     setSignal(defaults.signal);
+    setCapacity(defaults.capacity);
     setSortBy(COPYTRADE_DEFAULT_SORT_BY);
     setPerPage(COPYTRADE_API_PAGE_SIZE);
     setPageIndex(0);
+    setCursorByPage({ 0: null });
     setSelectedTraderId(null);
     setIsDetailOpen(false);
   }, []);
@@ -154,6 +200,7 @@ export default function CopyTradeLeaderboardPage() {
         onSortByChange: (next) => {
           setSortBy(next);
           setPageIndex(0);
+          setCursorByPage({ 0: null });
         },
         onSelectTrader: (traderId) => {
           setSelectedTraderId(traderId);
@@ -169,10 +216,87 @@ export default function CopyTradeLeaderboardPage() {
     if (!allowed) return;
     setPerPage(next as CopyTradePerPageOption);
     setPageIndex(0);
+    setCursorByPage({ 0: null });
   }, []);
 
+  const canJumpForward = useCallback(
+    (target: number) => {
+      if (target <= pageIndex) return true;
+      if (cursorByPage[target] != null) return true;
+      return Boolean(hasMore && nextCursor);
+    },
+    [pageIndex, cursorByPage, hasMore, nextCursor],
+  );
+
+  const walkForwardTo = useCallback(
+    async (targetPageIndex: number, startMap: Record<number, string | null>) => {
+      const snapshot = walkArgsRef.current;
+      const grown: Record<number, string | null> = { ...startMap };
+      let probePage = pageIndex + 1;
+      let probeCursor: string | null | undefined =
+        grown[probePage] ?? nextCursor ?? undefined;
+
+      while (probePage <= targetPageIndex) {
+        if (!probeCursor) break;
+        if (grown[probePage] == null) grown[probePage] = probeCursor;
+        if (probePage === targetPageIndex) break;
+
+        const page = await fetchCopyTradeLeaderboard({
+          grade: snapshot.grade,
+          confidence: snapshot.confidence,
+          signal: snapshot.signal,
+          capacity: snapshot.capacity,
+          sortBy: snapshot.sortBy,
+          pageSize: snapshot.pageSize,
+          cursor: probeCursor,
+        });
+        if (walkArgsRef.current !== snapshot) return grown;
+        if (!page.raw.pagination?.hasMore || !page.raw.pagination?.nextCursor) break;
+        probeCursor = page.raw.pagination.nextCursor;
+        probePage += 1;
+      }
+
+      return grown;
+    },
+    [pageIndex, nextCursor],
+  );
+
+  const handlePageChange = useCallback(
+    async (target: number) => {
+      const next = Math.max(0, Math.min(target, pageCount - 1));
+      if (next === pageIndex) return;
+      if (next <= pageIndex || cursorByPage[next] != null) {
+        setPageIndex(next);
+        return;
+      }
+      if (!canJumpForward(next)) return;
+
+      setIsJumpingForward(true);
+      try {
+        const grown = await walkForwardTo(next, cursorByPage);
+        setCursorByPage(grown);
+        if (grown[next] != null) {
+          setPageIndex(next);
+          return;
+        }
+        const fallback = Math.max(
+          0,
+          ...Object.keys(grown)
+            .map((k) => Number(k))
+            .filter((n) => Number.isFinite(n)),
+        );
+        setPageIndex(Math.min(fallback, pageCount - 1));
+      } catch (e) {
+        console.warn("[copytrade] forward page walk failed", e);
+      } finally {
+        setIsJumpingForward(false);
+      }
+    },
+    [pageCount, pageIndex, cursorByPage, canJumpForward, walkForwardTo],
+  );
+
   const showEmptyError = isError && !isLoading && totalCount === 0;
-  const gatedByFreePlan = !mockEnabled && user?.planTier === "free" && totalAvailable > 10;
+  const gatedByFreePlan = !mockEnabled && tierRestricted;
 
   return (
     <AppLayout title="Copy Trade Finder">
@@ -191,41 +315,38 @@ export default function CopyTradeLeaderboardPage() {
             onGradeChange={(value) => {
               setGrade(value);
               setPageIndex(0);
+              setCursorByPage({ 0: null });
             }}
             confidence={confidence}
             onConfidenceChange={(value) => {
               setConfidence(value);
               setPageIndex(0);
+              setCursorByPage({ 0: null });
             }}
             signal={signal}
             onSignalChange={(value) => {
               setSignal(value);
               setPageIndex(0);
+              setCursorByPage({ 0: null });
+            }}
+            capacity={capacity}
+            onCapacityChange={(value) => {
+              setCapacity(value);
+              setPageIndex(0);
+              setCursorByPage({ 0: null });
             }}
             isFetching={isFetching && !isLoading}
             onRefresh={() => refetch()}
           />
 
           {isError && !isLoading && totalCount > 0 ? (
-            <div className="flex items-center gap-2 rounded-lg border border-rose-500/30 bg-rose-500/10 px-3 py-2">
-              <WifiOff className="h-3.5 w-3.5 shrink-0 text-rose-400" />
-              <p className="text-xs text-rose-300">
-                {error instanceof Error ? error.message : "Failed to refresh leaderboard."}{" "}
-                <button
-                  type="button"
-                  className="font-semibold text-rose-300 underline underline-offset-2 hover:text-rose-200"
-                  onClick={() => refetch()}
-                >
-                  Retry now
-                </button>
-              </p>
-            </div>
+            <LeaderboardInlineError error={error} onRetry={() => refetch()} />
           ) : null}
 
           {gatedByFreePlan ? (
             <div className="rounded-lg border border-amber-500/35 bg-amber-500/10 px-3 py-2">
               <p className="text-xs text-amber-100">
-                Free tier shows the top 10 traders. Upgrade to view the full leaderboard.
+                Your current plan is restricted for full leaderboard access. Upgrade to unlock all rows.
               </p>
             </div>
           ) : null}
@@ -234,32 +355,32 @@ export default function CopyTradeLeaderboardPage() {
 
           <div className="flex items-center justify-between gap-3 md:hidden">
             <div className="flex min-w-0 items-center gap-3">
-              <div
-                className="h-5 w-1 shrink-0 rounded-full bg-[#C7AE6A] shadow-[0_0_8px_rgba(199,174,106,0.3)]"
-                aria-hidden
-              />
-              <h3 className="text-lg font-bold tracking-tight text-foreground">Leaderboard</h3>
-              {!isLoading ? (
-                <span className="rounded-md bg-[#1a1a1a] px-2 py-0.5 text-[10px] font-bold tabular-nums text-[#4a4a4a]">
-                  {totalCount}
-                </span>
-              ) : null}
+              <LeaderboardSectionTitle totalCount={totalCount} isLoading={isLoading} />
             </div>
             <CopyTradeMobileActions
               grade={grade}
               onGradeChange={(value) => {
                 setGrade(value);
                 setPageIndex(0);
+                setCursorByPage({ 0: null });
               }}
               confidence={confidence}
               onConfidenceChange={(value) => {
                 setConfidence(value);
                 setPageIndex(0);
+                setCursorByPage({ 0: null });
               }}
               signal={signal}
               onSignalChange={(value) => {
                 setSignal(value);
                 setPageIndex(0);
+                setCursorByPage({ 0: null });
+              }}
+              capacity={capacity}
+              onCapacityChange={(value) => {
+                setCapacity(value);
+                setPageIndex(0);
+                setCursorByPage({ 0: null });
               }}
               isFetching={isFetching && !isLoading}
               onRefresh={() => refetch()}
@@ -270,39 +391,13 @@ export default function CopyTradeLeaderboardPage() {
           <ActiveFilterChips filters={activeFilters} onClearAll={clearFilters} className="md:hidden" />
 
           <div className="hidden shrink-0 items-center gap-3 md:flex">
-            <div
-              className="h-5 w-1 shrink-0 rounded-full bg-[#C7AE6A] shadow-[0_0_8px_rgba(199,174,106,0.3)]"
-              aria-hidden
-            />
-            <h3 className="text-lg font-bold tracking-tight text-foreground">Leaderboard</h3>
-            {!isLoading ? (
-              <span className="rounded-md bg-[#1a1a1a] px-2 py-0.5 text-[10px] font-bold tabular-nums text-[#4a4a4a]">
-                {totalCount}
-              </span>
-            ) : null}
+            <LeaderboardSectionTitle totalCount={totalCount} isLoading={isLoading} />
           </div>
-
-          {selectedTrader ? (
-            <div className="rounded-xl border border-[#3b3118] bg-[#1a160d] px-3.5 py-2.5 shadow-[inset_0_0_0_1px_rgba(199,174,106,0.12)]">
-              <div className="flex items-center gap-2">
-                <UserRoundCheck className="h-3.5 w-3.5 text-[#C7AE6A]" />
-                <p className="text-[11px] font-bold uppercase tracking-[0.14em] text-[#ceb677]">
-                  Selected Trader
-                </p>
-              </div>
-              <p className="mt-1.5 text-sm text-[#f2e4be]">
-                <span className="font-semibold">{selectedTrader.handle}</span>{" "}
-                <span className="font-mono text-xs text-[#c9b07a]/90">
-                  ({selectedTrader.traderId})
-                </span>
-              </p>
-            </div>
-          ) : null}
 
           <div className="grid grid-cols-1 gap-3">
             <BaseTable
               columns={columns}
-              data={pagedRows}
+              data={traders}
               totalCount={totalCount}
               isLoading={isLoading}
               isError={showEmptyError}
@@ -316,39 +411,19 @@ export default function CopyTradeLeaderboardPage() {
               }}
               getRowClassName={(row) =>
                 row.traderId === selectedTraderId
-                  ? "bg-[#1b170d] ring-1 ring-inset ring-[#C7AE6A]/55"
+                  ? "bg-primary/10 ring-1 ring-inset ring-primary/55"
                   : undefined
               }
               pagination={{
                 pageSize: perPage,
-                resetKey: `${grade}|${confidence}|${signal}|${sortBy}|${perPage}`,
+                resetKey: `${grade}|${confidence}|${signal}|${capacity}|${sortBy}|${perPage}`,
               }}
-              tableMinWidthClassName="min-w-[1120px] relative"
-              skeletonColumnCount={10}
+              tableMinWidthClassName="min-w-[940px] relative [&_th]:px-3 [&_td]:px-3 [&_th:last-child]:pr-8 [&_td:last-child]:pr-8"
+              skeletonColumnCount={11}
               emptyTitle="No traders found"
               emptyDescription="Refine filters or clear to show all leaderboard rows."
               onClearFilters={clearFilters}
-              renderError={
-                <div className="flex min-h-[16rem] flex-col items-center justify-center gap-4 rounded-2xl border border-[#222] bg-[#111111]/40 px-8 py-12 text-center backdrop-blur-xl">
-                  <div className="flex h-14 w-14 items-center justify-center rounded-2xl border border-[#222] bg-[#1a1a1a]">
-                    <WifiOff className="h-6 w-6 text-gray-500" />
-                  </div>
-                  <div className="space-y-1.5">
-                    <p className="text-sm font-bold text-white">Could not load leaderboard</p>
-                    <p className="max-w-sm text-xs leading-relaxed text-gray-400">
-                      {error instanceof Error ? error.message : "Check your connection and try again."}
-                    </p>
-                  </div>
-                  <Button
-                    type="button"
-                    size="sm"
-                    className="rounded-xl bg-[#C7AE6A] font-bold text-black hover:bg-[#b89d5a]"
-                    onClick={() => refetch()}
-                  >
-                    Retry
-                  </Button>
-                </div>
-              }
+              renderError={<LeaderboardTableError error={error} onRetry={() => refetch()} />}
               showPagination={false}
               tableFooter={
                 totalCount > 0 ? (
@@ -360,10 +435,11 @@ export default function CopyTradeLeaderboardPage() {
                     to={to}
                     perPage={perPage}
                     perPageOptions={COPYTRADE_PER_PAGE_OPTIONS}
-                    onPageChange={setPageIndex}
+                    onPageChange={handlePageChange}
                     onPerPageChange={handlePerPageChange}
                     label="CopyTrade pagination"
-                    isJumping={isFetching}
+                    canJumpForward={canJumpForward}
+                    isJumping={isJumpingForward || isFetching}
                   />
                 ) : undefined
               }
@@ -377,7 +453,7 @@ export default function CopyTradeLeaderboardPage() {
               onClick={() => setIsDetailOpen(false)}
               aria-hidden
             />
-            <div className="fixed inset-y-0 right-0 z-50 w-full border-l border-[#222] bg-[#0a0a0a] shadow-2xl md:w-[540px]">
+            <div className="fixed inset-y-0 right-0 z-50 w-full border-l border-border bg-background shadow-2xl md:w-[760px] xl:w-[840px]">
               <CopyTradeDetailPanel
                 selectedTrader={selectedTrader}
                 detail={selectedTraderDetail}
@@ -386,10 +462,10 @@ export default function CopyTradeLeaderboardPage() {
                 error={detailError}
                 onRetry={() => refetchDetail()}
                 onClose={() => setIsDetailOpen(false)}
-                hasLiveHistory30={Boolean(history30 && history30.length > 0)}
-                hasLiveHistory90={Boolean(history90 && history90.length > 0)}
+                isHistoryFetching={isDetailHistoryFetching && !isDetailLoading}
                 hasHistoryError30={Boolean(history30Error)}
                 hasHistoryError90={Boolean(history90Error)}
+                hasHistoryError365={Boolean(history365Error)}
               />
             </div>
           </>

@@ -8,6 +8,7 @@ import {
 import { cn } from "@/lib/utils";
 import { ArbitrageRefreshButton } from "@/modules/arbitrage/components/ArbitrageRefreshButton";
 import {
+  COPYTRADE_CAPACITY_FILTER_OPTIONS,
   COPYTRADE_CONFIDENCE_FILTER_OPTIONS,
   COPYTRADE_GRADE_FILTER_OPTIONS,
   COPYTRADE_SIGNAL_FILTER_OPTIONS,
@@ -21,6 +22,8 @@ export type CopyTradeFiltersToolbarProps = {
   onConfidenceChange: (value: string) => void;
   signal: string;
   onSignalChange: (value: string) => void;
+  capacity: string;
+  onCapacityChange: (value: string) => void;
   isFetching: boolean;
   onRefresh: () => void;
 };
@@ -36,12 +39,14 @@ export function CopyTradeFiltersToolbar({
   onConfidenceChange,
   signal,
   onSignalChange,
+  capacity,
+  onCapacityChange,
   isFetching,
   onRefresh,
 }: CopyTradeFiltersToolbarProps) {
   return (
     <div className={cn(INSTITUTIONAL_FILTER_BAR, "hidden px-0 md:block")}>
-      <div className="md:grid md:grid-cols-[minmax(7.25rem,9.5rem)_minmax(7.25rem,9.5rem)_minmax(7.25rem,9.5rem)_auto] md:items-end md:gap-x-3 md:gap-y-2">
+      <div className="md:grid md:grid-cols-[minmax(7.25rem,9.5rem)_minmax(7.25rem,9.5rem)_minmax(7.25rem,9.5rem)_minmax(7.25rem,9.5rem)_auto] md:items-end md:gap-x-3 md:gap-y-2">
         <div className="min-w-0">
           <label htmlFor="copytrade-grade-desktop" className={institutionalFieldLabelClass}>
             Grade
@@ -81,6 +86,19 @@ export function CopyTradeFiltersToolbar({
             options={COPYTRADE_SIGNAL_FILTER_OPTIONS}
           />
         </div>
+        <div className="min-w-0">
+          <label htmlFor="copytrade-capacity-desktop" className={institutionalFieldLabelClass}>
+            Capacity
+          </label>
+          <CopyTradeFilterFieldSelect
+            id="copytrade-capacity-desktop"
+            value={capacity}
+            onValueChange={onCapacityChange}
+            placeholder="Capacity"
+            triggerClassName={institutionalFilterSelectTriggerClass}
+            options={COPYTRADE_CAPACITY_FILTER_OPTIONS}
+          />
+        </div>
         <div className="w-min min-w-0 shrink-0 justify-self-end">
           <div aria-hidden className="mb-1 h-5 shrink-0" />
           <ArbitrageRefreshButton isFetching={isFetching} onRefresh={onRefresh} />
@@ -97,6 +115,8 @@ export function CopyTradeMobileActions({
   onConfidenceChange,
   signal,
   onSignalChange,
+  capacity,
+  onCapacityChange,
   isFetching,
   onRefresh,
   onClearAllFilters,
@@ -141,6 +161,19 @@ export function CopyTradeMobileActions({
             placeholder="Signal"
             triggerClassName={institutionalFilterSelectTriggerSheetClass}
             options={COPYTRADE_SIGNAL_FILTER_OPTIONS}
+          />
+        </div>
+        <div className="space-y-3">
+          <label htmlFor="copytrade-capacity-sheet" className={institutionalFieldLabelClass}>
+            Capacity
+          </label>
+          <CopyTradeFilterFieldSelect
+            id="copytrade-capacity-sheet"
+            value={capacity}
+            onValueChange={onCapacityChange}
+            placeholder="Capacity"
+            triggerClassName={institutionalFilterSelectTriggerSheetClass}
+            options={COPYTRADE_CAPACITY_FILTER_OPTIONS}
           />
         </div>
       </InstitutionalMobileFilterSheet>

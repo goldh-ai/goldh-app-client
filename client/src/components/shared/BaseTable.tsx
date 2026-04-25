@@ -22,7 +22,6 @@ import {
   institutionalTableFooterStripClass,
   institutionalTableHeadCellBaseClass,
   institutionalTableHeadLabelClass,
-  institutionalTableHeadStickyClass,
   institutionalTableShellButtonClass,
   institutionalTableSkeletonTheadClass,
 } from "@/lib/institutionalDataChrome";
@@ -303,7 +302,12 @@ function BaseTableInner<TData>({
             tableMinWidthClassName,
           )}
         >
-          <thead className={institutionalTableHeadLabelClass}>
+          <thead
+            className={cn(
+              institutionalTableHeadLabelClass,
+              "sticky top-0 z-30 border-b border-[#222] bg-[#0c0c0c]",
+            )}
+          >
             {table.getHeaderGroups().map((hg) => (
               <tr key={hg.id}>
                 {hg.headers.map((header) => (
@@ -311,7 +315,6 @@ function BaseTableInner<TData>({
                     key={header.id}
                     className={cn(
                       institutionalTableHeadCellBaseClass,
-                      institutionalTableHeadStickyClass,
                       "font-medium",
                       getMetaHeadClass(header.column.columnDef.meta),
                     )}

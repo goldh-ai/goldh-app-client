@@ -27,3 +27,11 @@ export const COPYTRADE_SIGNAL_FILTER_OPTIONS: CopyTradeFilterSelectOption[] = [
   { value: "Weak", label: "Weak" },
   { value: "Invalid", label: "Invalid" },
 ];
+
+export const COPYTRADE_CAPACITY_FILTER_OPTIONS: CopyTradeFilterSelectOption[] =
+  [
+    { value: "all", label: "All" },
+    { value: "High", label: "High" },
+    { value: "Medium", label: "Medium" },
+    { value: "Low", label: "Low" },
+  ];

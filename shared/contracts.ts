@@ -1173,19 +1173,69 @@ export const copyTradeSortByApiSchema = z.enum([
 ]);
 export type CopyTradeSortByApi = z.infer<typeof copyTradeSortByApiSchema>;
 
-export const copyTradeTraderApiDtoSchema = z.object({
-  trader_id: z.string().min(1).catch("UNKNOWN"),
-  handle: z.string().min(1).catch("Unknown Trader"),
-  computed_rank: z.coerce.number().int().positive().catch(9_999),
-  rank_change_7d: z.coerce.number().int().catch(0),
-  grade: copyTradeGradeSchema.catch("C"),
-  signal_state: copyTradeSignalStateSchema.catch("Weak"),
-  confidence_band: copyTradeConfidenceBandSchema.catch("Medium"),
-  ema_score: z.coerce.number().min(0).max(100).catch(0),
-  score_momentum: z.coerce.number().catch(0),
-  lifecycle_state: copyTradeLifecycleStateSchema.catch("inactive"),
-  last_seen_at: z.string().datetime().catch(new Date(0).toISOString()),
-});
+/** Single row from GET `/api/copytrade/history/:id`. */
+export const copyTradeHistoryRecordSchema = z
+  .object({
+    snapshot_date: z.string().min(1),
+    raw_score: z.coerce.number(),
+    ema_score: z.coerce.number(),
+    grade: z.string().optional(),
+    confidence_band: z.string().optional(),
+    signal_state: z.string().optional(),
+    rank_at_time: z.coerce.number().int().nullable().optional(),
+    roi_total_pct: z.coerce.number().optional(),
+    max_drawdown_pct: z.coerce.number().optional(),
+  })
+  .passthrough();
+export type CopyTradeHistoryRecord = z.infer<
+  typeof copyTradeHistoryRecordSchema
+>;
+
+export const copyTradeHistoryApiResponseSchema = z
+  .object({
+    trader_id: z.string(),
+    days_requested: z.coerce.number().optional(),
+    record_count: z.coerce.number().optional(),
+    history: z.array(copyTradeHistoryRecordSchema).catch([]),
+    disclaimer: z.string().optional(),
+  })
+  .passthrough();
+export type CopyTradeHistoryApiResponse = z.infer<
+  typeof copyTradeHistoryApiResponseSchema
+>;
+
+export const copyTradeCapacityFlagSchema = z.enum(["Low", "Medium", "High"]);
+export type CopyTradeCapacityFlag = z.infer<typeof copyTradeCapacityFlagSchema>;
+
+export const copyTradeTraderApiDtoSchema = z
+  .object({
+    trader_id: z.string().min(1).catch("UNKNOWN"),
+    handle: z.string().min(1).catch("Unknown Trader"),
+    computed_rank: z.coerce.number().int().positive().catch(9_999),
+    rank_change_7d: z.union([z.coerce.number().int(), z.null()]).optional(),
+    grade: copyTradeGradeSchema.catch("C"),
+    signal_state: copyTradeSignalStateSchema.catch("Weak"),
+    confidence_band: copyTradeConfidenceBandSchema.catch("Medium"),
+    risk_level: z.enum(["Low", "Medium", "High"]).optional(),
+    ema_score: z.coerce.number().min(0).max(100).catch(0),
+    raw_score: z.coerce.number().min(0).max(100).optional(),
+    score_momentum: z.coerce.number().catch(0),
+    lifecycle_state: copyTradeLifecycleStateSchema.catch("inactive"),
+    last_seen_at: z.string().optional(),
+    generatedAt: z.string().optional(),
+    fetched_at: z.string().optional(),
+    profile_tag: z.string().optional(),
+    capacity_flag: copyTradeCapacityFlagSchema.optional(),
+    roi_total_pct: z.coerce.number().optional(),
+    max_drawdown_pct: z.coerce.number().optional(),
+    months_active: z.coerce.number().optional(),
+    total_trades: z.coerce.number().optional(),
+    raw_metrics: z.record(z.unknown()).optional(),
+    sub_scores: z.record(z.unknown()).optional(),
+    score_explanation_summary: z.record(z.unknown()).optional(),
+    behavioral_tags: z.array(z.string()).optional(),
+  })
+  .passthrough();
 export type CopyTradeTraderApiDto = z.infer<typeof copyTradeTraderApiDtoSchema>;
 
 export const copyTradeLeaderboardApiResponseSchema = z
@@ -1193,19 +1243,52 @@ export const copyTradeLeaderboardApiResponseSchema = z
     traders: z.array(copyTradeTraderApiDtoSchema).catch([]),
     trader_count: z.coerce.number().int().nonnegative().nullish(),
     snapshot_id: z.string().nullish(),
-    generatedAt: z.string().datetime().nullish(),
+    generatedAt: z.string().nullish(),
     snapshot_stale: z.boolean().nullish(),
     disclaimer: z.string().nullish(),
+    meta: z
+      .object({
+        total: z.coerce.number().optional(),
+        snapshot_id: z.string().optional(),
+        generatedAt: z.string().optional(),
+        is_stale: z.boolean().optional(),
+        age_seconds: z.coerce.number().optional(),
+        tier_restricted: z.boolean().optional(),
+      })
+      .passthrough()
+      .optional(),
+    pagination: z
+      .object({
+        nextCursor: z.string().nullable().optional(),
+        pageSize: z.coerce.number().nullable().optional(),
+        hasMore: z.boolean().nullable().optional(),
+      })
+      .passthrough()
+      .optional(),
   })
   .passthrough()
-  .transform((payload) => ({
-    ...payload,
-    trader_count: payload.trader_count ?? payload.traders.length,
-    snapshot_id: payload.snapshot_id ?? undefined,
-    generatedAt: payload.generatedAt ?? undefined,
-    snapshot_stale: payload.snapshot_stale ?? undefined,
-    disclaimer: payload.disclaimer ?? undefined,
-  }));
+  .transform((payload) => {
+    const meta = payload.meta as Record<string, unknown> | undefined;
+    const totalFromMeta =
+      meta && typeof meta.total === "number" ? meta.total : undefined;
+    return {
+      ...payload,
+      trader_count:
+        payload.trader_count ?? totalFromMeta ?? payload.traders.length,
+      snapshot_id:
+        payload.snapshot_id ??
+        (meta && typeof meta.snapshot_id === "string"
+          ? meta.snapshot_id
+          : undefined),
+      generatedAt:
+        payload.generatedAt ??
+        (meta && typeof meta.generatedAt === "string"
+          ? meta.generatedAt
+          : undefined),
+      snapshot_stale: payload.snapshot_stale ?? undefined,
+      disclaimer: payload.disclaimer ?? undefined,
+    };
+  });
 export type CopyTradeLeaderboardApiResponse = z.infer<
   typeof copyTradeLeaderboardApiResponseSchema
 >;
@@ -1214,16 +1297,27 @@ export const copyTradeTraderSchema = z.object({
   traderId: z.string().min(1),
   handle: z.string().min(1),
   computedRank: z.number().int().positive(),
-  rankChange7d: z.number().int(),
+  rankChange7d: z.number().int().nullable(),
   grade: copyTradeGradeSchema,
   signalState: copyTradeSignalStateSchema,
   confidenceBand: copyTradeConfidenceBandSchema,
   score: z.number().min(0).max(100),
   momentum: z.number(),
+  profileTag: z.string().nullable(),
+  capacityFlag: copyTradeCapacityFlagSchema.nullable(),
   lifecycleState: copyTradeLifecycleStateSchema,
-  lastSeenAt: z.string().datetime(),
+  lastSeenAt: z.string(),
 });
 export type CopyTradeTrader = z.infer<typeof copyTradeTraderSchema>;
+
+function pickIsoTimestamp(
+  ...candidates: (string | undefined | null)[]
+): string {
+  for (const c of candidates) {
+    if (typeof c === "string" && c.trim().length > 0) return c.trim();
+  }
+  return new Date(0).toISOString();
+}
 
 export function mapCopyTradeTraderFromApiDto(
   dto: CopyTradeTraderApiDto,
@@ -1232,13 +1326,19 @@ export function mapCopyTradeTraderFromApiDto(
     traderId: dto.trader_id,
     handle: dto.handle,
     computedRank: dto.computed_rank,
-    rankChange7d: dto.rank_change_7d,
+    rankChange7d: dto.rank_change_7d ?? null,
     grade: dto.grade,
     signalState: dto.signal_state,
     confidenceBand: dto.confidence_band,
     score: dto.ema_score,
     momentum: dto.score_momentum,
+    profileTag: dto.profile_tag ?? null,
+    capacityFlag: dto.capacity_flag ?? null,
     lifecycleState: dto.lifecycle_state,
-    lastSeenAt: dto.last_seen_at,
+    lastSeenAt: pickIsoTimestamp(
+      dto.last_seen_at,
+      dto.generatedAt,
+      dto.fetched_at,
+    ),
   };
 }
