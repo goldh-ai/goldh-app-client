@@ -150,6 +150,7 @@ export function useCopyTradeTraderDetail(args: UseCopyTradeTraderDetailArgs) {
     error: query.error,
     refetch: async () => {
       await query.refetch();
+      if (mockEnabled) return;
       await Promise.all([
         history30Query.refetch(),
         history90Query.refetch(),

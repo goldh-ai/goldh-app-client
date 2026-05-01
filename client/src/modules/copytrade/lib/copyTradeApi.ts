@@ -3,6 +3,7 @@ import {
   mapCopyTradeTraderFromApiDto,
   type CopyTradeHistoryRecord,
   type CopyTradeLeaderboardApiResponse,
+  type CopyTradeSortByApi,
   type CopyTradeTrader,
 } from "@shared/types";
 import { apiUrl } from "@/lib/queryClient";
@@ -45,8 +46,7 @@ export type CopyTradeLeaderboardRequest = {
   capacity?: string;
   pageSize?: number;
   cursor?: string;
-  /** When backend supports server-side sort (e.g. `ema_score_desc`). */
-  sortBy?: string;
+  sortBy?: CopyTradeSortByApi;
 };
 
 export type CopyTradeLeaderboardResponse = {
