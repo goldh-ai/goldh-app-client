@@ -1,5 +1,5 @@
 import { memo, useEffect, useState } from "react";
-import type { ReactElement, ReactNode } from "react";
+import type { KeyboardEvent, MouseEvent, ReactElement, ReactNode } from "react";
 import {
   flexRender,
   getCoreRowModel,
@@ -22,6 +22,7 @@ import {
   institutionalTableFooterStripClass,
   institutionalTableHeadCellBaseClass,
   institutionalTableHeadLabelClass,
+  institutionalTableHeadStickyClass,
   institutionalTableShellButtonClass,
   institutionalTableSkeletonTheadClass,
 } from "@/lib/institutionalDataChrome";
@@ -124,6 +125,39 @@ function getMetaHeadClass(meta: unknown): string | undefined {
     (m.arbHeadClass as string | undefined) ??
     (m.headClass as string | undefined)
   );
+}
+
+function isInteractiveElement(target: EventTarget | null): boolean {
+  if (!(target instanceof HTMLElement)) return false;
+  return Boolean(
+    target.closest(
+      'button, a, input, select, textarea, [role="button"], [role="link"], [data-row-click-ignore="true"]',
+    ),
+  );
+}
+
+function createRowClickHandler<TData>(
+  onRowClick: ((row: TData) => void) | undefined,
+  row: TData,
+) {
+  return (e: MouseEvent<HTMLTableRowElement>) => {
+    if (!onRowClick) return;
+    if (isInteractiveElement(e.target)) return;
+    onRowClick(row);
+  };
+}
+
+function createRowKeyDownHandler<TData>(
+  onRowClick: ((row: TData) => void) | undefined,
+  row: TData,
+) {
+  return (e: KeyboardEvent<HTMLTableRowElement>) => {
+    if (!onRowClick) return;
+    if (isInteractiveElement(e.target)) return;
+    if (e.key !== "Enter" && e.key !== " ") return;
+    e.preventDefault();
+    onRowClick(row);
+  };
 }
 
 function BaseTableInner<TData>({
@@ -315,6 +349,7 @@ function BaseTableInner<TData>({
                     key={header.id}
                     className={cn(
                       institutionalTableHeadCellBaseClass,
+                      institutionalTableHeadStickyClass,
                       "font-medium",
                       getMetaHeadClass(header.column.columnDef.meta),
                     )}
@@ -338,7 +373,10 @@ function BaseTableInner<TData>({
                   onRowClick && "cursor-pointer",
                   getRowClassName?.(row.original),
                 )}
-                onClick={() => onRowClick?.(row.original)}
+                role={onRowClick ? "button" : undefined}
+                tabIndex={onRowClick ? 0 : undefined}
+                onClick={createRowClickHandler(onRowClick, row.original)}
+                onKeyDown={createRowKeyDownHandler(onRowClick, row.original)}
               >
                 {row.getVisibleCells().map((cell) => (
                   <td

@@ -118,7 +118,7 @@ function ServerSortHeader(props: {
       <span className="inline-flex min-w-0 items-center gap-1.5 whitespace-nowrap">
         <span>{label}</span>
         <span className="hidden md:inline-flex">
-          <SortDirectionIcon sorted={column.getIsSorted() ? sorted : sorted} />
+          <SortDirectionIcon sorted={sorted} />
         </span>
       </span>
     </button>
