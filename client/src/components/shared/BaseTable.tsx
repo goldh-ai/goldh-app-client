@@ -22,7 +22,6 @@ import {
   institutionalTableFooterStripClass,
   institutionalTableHeadCellBaseClass,
   institutionalTableHeadLabelClass,
-  institutionalTableHeadStickyClass,
   institutionalTableShellButtonClass,
   institutionalTableSkeletonTheadClass,
 } from "@/lib/institutionalDataChrome";
@@ -65,6 +64,7 @@ export type BaseTableProps<TData> = {
   /** Render built-in local pagination controls (defaults to true). */
   showPagination?: boolean;
   getRowClassName?: (row: TData) => string | undefined;
+  onRowClick?: (row: TData) => void;
 };
 
 function TableLoadingSkeleton({
@@ -149,6 +149,7 @@ function BaseTableInner<TData>({
   tableFooter,
   showPagination = true,
   getRowClassName,
+  onRowClick,
 }: BaseTableProps<TData>) {
   const pageSize = pagination.pageSize;
   const effectiveSkeletonRows =
@@ -301,7 +302,12 @@ function BaseTableInner<TData>({
             tableMinWidthClassName,
           )}
         >
-          <thead className={institutionalTableHeadLabelClass}>
+          <thead
+            className={cn(
+              institutionalTableHeadLabelClass,
+              "sticky top-0 z-30 border-b border-[#222] bg-[#0c0c0c]",
+            )}
+          >
             {table.getHeaderGroups().map((hg) => (
               <tr key={hg.id}>
                 {hg.headers.map((header) => (
@@ -309,7 +315,6 @@ function BaseTableInner<TData>({
                     key={header.id}
                     className={cn(
                       institutionalTableHeadCellBaseClass,
-                      institutionalTableHeadStickyClass,
                       "font-medium",
                       getMetaHeadClass(header.column.columnDef.meta),
                     )}
@@ -330,8 +335,10 @@ function BaseTableInner<TData>({
                 className={cn(
                   "group",
                   institutionalTableDataRowClass,
+                  onRowClick && "cursor-pointer",
                   getRowClassName?.(row.original),
                 )}
+                onClick={() => onRowClick?.(row.original)}
               >
                 {row.getVisibleCells().map((cell) => (
                   <td

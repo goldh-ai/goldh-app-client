@@ -13,3 +13,6 @@ Thumbs.db
 # Cursor local config/rules
 .cursor/
 .vercel
+₹
+# Graphify
+graphify-out/

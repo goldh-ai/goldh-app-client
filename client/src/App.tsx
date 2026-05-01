@@ -39,6 +39,7 @@ import CatalystFeed from "@/modules/catalyst/pages/CatalystFeed";
 import WhaleWatchPage from "@/modules/whale/WhaleWatchPage";
 import STREETScorePage from "@/modules/streetscore/pages/STREETScorePage";
 import ArbitrageScannerPage from "@/modules/arbitrage/pages/ArbitrageScannerPage";
+import CopyTradeLeaderboardPage from "@/modules/copytrade/pages/CopyTradeLeaderboardPage";
 
 import NotFound from "@/pages/not-found";
 
@@ -151,6 +152,13 @@ function Router() {
       <Route path="/features/arbitrage">
         <ProtectedRoute mode="prompt">
           <ArbitrageScannerPage />
+        </ProtectedRoute>
+      </Route>
+
+      {/* Copy Trade Finder (Module 9) */}
+      <Route path="/features/copytrade">
+        <ProtectedRoute mode="prompt">
+          <CopyTradeLeaderboardPage />
         </ProtectedRoute>
       </Route>
 
