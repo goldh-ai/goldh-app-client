@@ -1,4 +1,10 @@
-import type { CopyTradeConfidenceBand, CopyTradeGrade } from "@shared/types";
+import type {
+  CopyTradeCapacityFlag,
+  CopyTradeConfidenceBand,
+  CopyTradeGrade,
+  CopyTradeLifecycleState,
+  CopyTradeSignalState,
+} from "@shared/types";
 import { cn } from "@/lib/utils";
 import {
   Tooltip,
@@ -9,7 +15,6 @@ import {
 import {
   COPYTRADE_RECOMMENDED_ACTION_LABEL,
   getCopyTradeRecommendedAction,
-  getCopyTradeRecommendedActionTooltip,
   type CopyTradeRecommendedAction,
 } from "../lib/copyTradeRecommendedAction";
 
@@ -33,6 +38,9 @@ const actionMobileLetter: Record<CopyTradeRecommendedAction, string> = {
 type CopyTradeRecommendedActionBadgeProps = {
   grade: CopyTradeGrade;
   confidenceBand: CopyTradeConfidenceBand;
+  signalState: CopyTradeSignalState;
+  lifecycleState?: CopyTradeLifecycleState | null;
+  capacityFlag?: CopyTradeCapacityFlag | null;
   className?: string;
   size?: "default" | "compact" | "hero";
   onActivate?: () => void;
@@ -42,14 +50,23 @@ type CopyTradeRecommendedActionBadgeProps = {
 export function CopyTradeRecommendedActionBadge({
   grade,
   confidenceBand,
+  signalState,
+  lifecycleState,
+  capacityFlag,
   className,
   size = "default",
   onActivate,
   tableMode = true,
 }: CopyTradeRecommendedActionBadgeProps) {
-  const action = getCopyTradeRecommendedAction(grade, confidenceBand);
+  const result = getCopyTradeRecommendedAction({
+    grade,
+    confidenceBand,
+    signalState,
+    lifecycleState: lifecycleState ?? undefined,
+    capacityFlag: capacityFlag ?? undefined,
+  });
+  const { action, reason } = result;
   const label = COPYTRADE_RECOMMENDED_ACTION_LABEL[action];
-  const tip = getCopyTradeRecommendedActionTooltip(action);
 
   const sizeClass =
     size === "hero"
@@ -113,7 +130,10 @@ export function CopyTradeRecommendedActionBadge({
           side="top"
           className="max-w-xs border border-border bg-popover text-xs text-popover-foreground"
         >
-          {tip}
+          <span className="block font-bold uppercase tracking-wider text-foreground">
+            {label}
+          </span>
+          <span className="mt-1 block text-muted-foreground">{reason}</span>
         </TooltipContent>
       </Tooltip>
     </TooltipProvider>

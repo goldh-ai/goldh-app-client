@@ -241,6 +241,9 @@ export function createCopyTradeColumns(
           <CopyTradeRecommendedActionBadge
             grade={row.original.grade}
             confidenceBand={row.original.confidenceBand}
+            signalState={row.original.signalState}
+            lifecycleState={row.original.lifecycleState}
+            capacityFlag={row.original.capacityFlag}
             size="compact"
             onActivate={
               onSelectTrader

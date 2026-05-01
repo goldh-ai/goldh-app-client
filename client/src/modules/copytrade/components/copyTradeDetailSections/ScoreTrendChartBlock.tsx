@@ -9,7 +9,12 @@ import {
   YAxis,
 } from "recharts";
 import { Skeleton } from "@/components/ui/skeleton";
+import { cn } from "@/lib/utils";
 import { fmtCopyTradeScore } from "../../lib/copyTradeFormat";
+import type {
+  CopyTradeScoreStability,
+  CopyTradeTraderDetail,
+} from "../../lib/copyTradeDetail";
 import type { CopyTradeScoreTrendPoint } from "../../lib/copyTradeHistoryTransforms";
 import { formatShortDate } from "../../lib/copyTradeHistoryTransforms";
 
@@ -23,12 +28,35 @@ type ScoreTrendChartBlockProps = {
   points: CopyTradeScoreTrendPoint[];
   isLoading: boolean;
   hasError: boolean;
+  stability?: CopyTradeTraderDetail["scoreStability"];
+};
+
+const STABILITY_TONE: Record<
+  CopyTradeScoreStability,
+  { dot: string; surface: string; label: string }
+> = {
+  stable: {
+    dot: "bg-emerald-400",
+    surface: "border-emerald-500/35 bg-emerald-500/10 text-emerald-200",
+    label: "Stable",
+  },
+  moderate: {
+    dot: "bg-amber-400",
+    surface: "border-amber-500/35 bg-amber-500/10 text-amber-200",
+    label: "Moderate",
+  },
+  volatile: {
+    dot: "bg-rose-400",
+    surface: "border-rose-500/35 bg-rose-500/10 text-rose-200",
+    label: "Volatile",
+  },
 };
 
 export function ScoreTrendChartBlock({
   points,
   isLoading,
   hasError,
+  stability,
 }: ScoreTrendChartBlockProps) {
   const tickDates = useMemo(() => {
     if (points.length === 0) return [];
@@ -37,7 +65,12 @@ export function ScoreTrendChartBlock({
       .map((p) => p.date);
   }, [points]);
 
-  const lastScore = points.length ? points[points.length - 1]!.score : null;
+  const stats = useMemo(() => {
+    if (points.length < 2) return null;
+    const start = points[0]!.score;
+    const end = points[points.length - 1]!.score;
+    return { start, end, delta: end - start };
+  }, [points]);
 
   if (isLoading && points.length < 2) {
     return <Skeleton className="h-44 w-full rounded-lg bg-muted/40" />;
@@ -63,8 +96,47 @@ export function ScoreTrendChartBlock({
     );
   }
 
+  const stabilityKey: CopyTradeScoreStability | null = stability ?? null;
+  const stabilityTone = stabilityKey ? STABILITY_TONE[stabilityKey] : null;
+  const deltaTone =
+    stats == null
+      ? "text-foreground"
+      : stats.delta > 0
+        ? "text-emerald-300"
+        : stats.delta < 0
+          ? "text-rose-300"
+          : "text-foreground";
+  const deltaLabel =
+    stats == null
+      ? "—"
+      : `${stats.delta > 0 ? "+" : ""}${stats.delta.toFixed(1)} pts`;
+
   return (
-    <div>
+    <div className="space-y-2.5">
+      <div className="flex flex-wrap items-center justify-between gap-2">
+        {stabilityTone ? (
+          <span
+            className={cn(
+              "inline-flex items-center gap-1.5 rounded-full border px-2 py-0.5 text-[0.6rem] font-bold uppercase tracking-[0.18em]",
+              stabilityTone.surface,
+            )}
+          >
+            <span className={cn("h-1.5 w-1.5 rounded-full", stabilityTone.dot)} />
+            {stabilityTone.label}
+          </span>
+        ) : (
+          <span className="text-[0.6rem] font-bold uppercase tracking-[0.18em] text-muted-foreground">
+            Trend
+          </span>
+        )}
+        <span
+          className={cn("font-mono text-xs font-bold tabular-nums", deltaTone)}
+          title="Change from start to end of selected window"
+        >
+          Δ {deltaLabel}
+        </span>
+      </div>
+
       <div className="h-44 w-full rounded-lg border border-border bg-background p-2">
         <ResponsiveContainer width="100%" height="100%">
           <LineChart
@@ -118,14 +190,6 @@ export function ScoreTrendChartBlock({
           </LineChart>
         </ResponsiveContainer>
       </div>
-      <p className="mt-2 text-xs font-medium text-muted-foreground">
-        Trend points plotted directly from backend history snapshots.
-      </p>
-      {lastScore != null ? (
-        <p className="mt-1 font-mono text-xs text-primary/80">
-          Current score (last point): {fmtCopyTradeScore(lastScore)}
-        </p>
-      ) : null}
     </div>
   );
 }

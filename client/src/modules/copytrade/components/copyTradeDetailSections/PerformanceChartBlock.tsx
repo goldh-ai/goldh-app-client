@@ -34,7 +34,8 @@ export function PerformanceChartBlock({
     const startEq = points[0]!.equity;
     const endEq = points[points.length - 1]!.equity;
     const totalProfit = endEq - startEq;
-    return { startEq, endEq, totalProfit };
+    const roiPct = startEq > 0 ? (totalProfit / startEq) * 100 : 0;
+    return { startEq, endEq, totalProfit, roiPct };
   }, [points]);
 
   if (isLoading && points.length < 2) {
@@ -60,7 +61,24 @@ export function PerformanceChartBlock({
   }
 
   return (
-    <div>
+    <div className="space-y-2.5">
+      {stats ? (
+        <div className="flex flex-wrap items-center justify-between gap-2">
+          <span className="text-[0.6rem] font-bold uppercase tracking-[0.18em] text-muted-foreground">
+            Equity curve
+          </span>
+          <span
+            className={cn(
+              "font-mono text-xs font-bold tabular-nums",
+              stats.totalProfit >= 0 ? "text-emerald-300" : "text-rose-300",
+            )}
+          >
+            {stats.roiPct > 0 ? "+" : ""}
+            {stats.roiPct.toFixed(1)}%
+          </span>
+        </div>
+      ) : null}
+
       <div className="h-44 w-full rounded-lg border border-border bg-background p-2">
         <ResponsiveContainer width="100%" height="100%">
           <AreaChart
@@ -114,43 +132,6 @@ export function PerformanceChartBlock({
           </AreaChart>
         </ResponsiveContainer>
       </div>
-      {stats ? (
-        <div className="mt-3 flex flex-wrap gap-3 text-xs">
-          <span className="text-muted-foreground">
-            Start:{" "}
-            <span className="font-mono font-semibold text-foreground">
-              $
-              {stats.startEq.toLocaleString(undefined, {
-                maximumFractionDigits: 0,
-              })}
-            </span>
-          </span>
-          <span className="text-muted-foreground">
-            End:{" "}
-            <span className="font-mono font-semibold text-foreground">
-              $
-              {stats.endEq.toLocaleString(undefined, {
-                maximumFractionDigits: 0,
-              })}
-            </span>
-          </span>
-          <span className="text-muted-foreground">
-            Total P/L:{" "}
-            <span
-              className={cn(
-                "font-mono font-bold",
-                stats.totalProfit >= 0 ? "text-emerald-400" : "text-rose-400",
-              )}
-            >
-              {stats.totalProfit >= 0 ? "+" : ""}$
-              {Math.round(stats.totalProfit).toLocaleString()}
-            </span>
-          </span>
-        </div>
-      ) : null}
-      <p className="mt-2 text-xs font-medium text-muted-foreground">
-        Performance curve rendered from backend ROI history snapshots.
-      </p>
     </div>
   );
 }

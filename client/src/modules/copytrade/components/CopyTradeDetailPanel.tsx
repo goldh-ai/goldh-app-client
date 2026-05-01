@@ -71,6 +71,7 @@ export function CopyTradeDetailPanel({
           grade={headerSource.grade}
           confidenceBand={headerSource.confidenceBand}
           signalState={headerSource.signalState}
+          lifecycleState={headerSource.lifecycleState}
           capacityFlag={headerSource.capacityFlag}
           lastUpdatedIso={headerTimestamp}
           monthsActive={detail?.monthsActiveProfile}
@@ -79,6 +80,7 @@ export function CopyTradeDetailPanel({
           score={headerSource.score}
           momentum={headerSource.momentum}
           computedRank={headerSource.computedRank}
+          scoreCapApplied={detail?.scoreCapApplied}
         />
         <div className="min-h-0 flex-1 overflow-y-auto p-5">
           <div className="flex items-center gap-2 text-rose-300">
@@ -113,6 +115,7 @@ export function CopyTradeDetailPanel({
           grade={selectedTrader.grade}
           confidenceBand={selectedTrader.confidenceBand}
           signalState={selectedTrader.signalState}
+          lifecycleState={selectedTrader.lifecycleState}
           capacityFlag={selectedTrader.capacityFlag}
           lastUpdatedIso={selectedTrader.lastSeenAt}
           monthsActive={null}
@@ -143,6 +146,7 @@ export function CopyTradeDetailPanel({
         grade={detail.grade}
         confidenceBand={detail.confidenceBand}
         signalState={detail.signalState}
+        lifecycleState={detail.lifecycleState}
         capacityFlag={detail.capacityFlag}
         lastUpdatedIso={headerTimestamp}
         monthsActive={detail.monthsActiveProfile}
@@ -151,6 +155,7 @@ export function CopyTradeDetailPanel({
         score={detail.score}
         momentum={detail.momentum}
         computedRank={detail.computedRank}
+        scoreCapApplied={detail.scoreCapApplied}
       />
 
       <div className="min-h-0 flex-1 overflow-y-auto px-5 pb-8 pt-4">

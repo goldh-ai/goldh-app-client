@@ -43,7 +43,6 @@ function pickPerformance(
   return [];
 }
 
-
 export type CopyTradeDetailSectionsProps = {
   detail: CopyTradeTraderDetail;
   isHistoryFetching: boolean;
@@ -81,10 +80,11 @@ export function CopyTradeDetailSections({
 
   return (
     <div className="space-y-3">
+      {/* Score story — chart + drivers, paired so the user can see "is it stable" and "why" together. */}
       <div className="grid grid-cols-1 gap-3 xl:grid-cols-2">
         <SectionShell
-          title="Score trend"
-          subtitle="Last 30 / 90 days"
+          title="Is the score consistent?"
+          subtitle="Score trend over the selected window"
           right={
             <div className="inline-flex rounded-md border border-border bg-muted/40 p-0.5">
               {([30, 90] as const).map((d) => (
@@ -109,12 +109,13 @@ export function CopyTradeDetailSections({
             points={scorePoints}
             isLoading={isHistoryFetching}
             hasError={scoreErr}
+            stability={detail.scoreStability}
           />
         </SectionShell>
 
         <SectionShell
-          title="Performance history"
-          subtitle="Profit/equity curve over time"
+          title="How have they performed?"
+          subtitle="Equity curve from cumulative ROI"
           right={
             <div className="inline-flex rounded-md border border-border bg-muted/40 p-0.5">
               {(["30d", "90d", "all"] as const).map((k) => (
@@ -145,89 +146,33 @@ export function CopyTradeDetailSections({
 
       <div className="grid grid-cols-1 gap-3 xl:grid-cols-2">
         <SectionShell
-          title="Why this score"
-          subtitle="Simple explanation of grade and confidence"
+          title="Why this grade?"
+          subtitle="Top contributors to the score"
         >
           <ScoreDriversBlock detail={detail} />
         </SectionShell>
 
         <SectionShell
-          title="Risk assessment"
-          subtitle="Essential risk checks only"
+          title="Should I worry about losses?"
+          subtitle="Drawdown, win rate, and overall risk"
         >
           <RiskProfileBlock detail={detail} />
         </SectionShell>
       </div>
 
       <SectionShell
-        title="Trading activity"
-        subtitle="Cadence and stated style"
+        title="Are they active enough?"
+        subtitle="Trade volume, tenure, and stated style"
       >
         <TradingActivityBlock detail={detail} />
       </SectionShell>
 
       <SectionShell
-        title="Behavioral tags"
-        subtitle="Strategy style, activity signals, and risk posture"
+        title="How do they trade?"
+        subtitle="Profile type and behavioral tags"
       >
         <BehavioralTagsBlock detail={detail} />
       </SectionShell>
-
-      <details className="rounded-xl border border-border bg-card/70 px-3 py-2">
-        <summary className="cursor-pointer list-none text-xs font-bold uppercase tracking-wider text-muted-foreground">
-          More context
-        </summary>
-        <div className="mt-3 space-y-3">
-          <div className="grid grid-cols-2 gap-2 text-xs">
-            <div className="rounded-lg border border-border bg-card px-2.5 py-2">
-              <p className="text-xs uppercase tracking-wide text-muted-foreground">
-                Profile type
-              </p>
-              <p className="mt-1 font-semibold text-foreground">
-                {detail.strategyLabel ?? "General"}
-              </p>
-            </div>
-            <div className="rounded-lg border border-border bg-card px-2.5 py-2">
-              <p className="text-xs uppercase tracking-wide text-muted-foreground">
-                Rank
-              </p>
-              <p className="mt-1 font-semibold text-foreground">
-                #{detail.computedRank}
-              </p>
-            </div>
-          </div>
-          {detail.behavioralTags && detail.behavioralTags.length > 0 ? (
-            <div className="flex flex-wrap gap-1.5">
-              {detail.behavioralTags.map((tag) => (
-                <span
-                  key={tag}
-                  className="rounded-full border border-primary/25 bg-primary/10 px-2.5 py-1 text-xs font-semibold uppercase tracking-wide text-primary"
-                >
-                  {tag}
-                </span>
-              ))}
-            </div>
-          ) : null}
-
-          {detail.subscores.length > 0 ? (
-            <div className="grid grid-cols-2 gap-2 sm:grid-cols-3">
-              {detail.subscores.slice(0, 9).map((m) => (
-                <div
-                  key={m.label}
-                  className="rounded-lg border border-border bg-card px-2 py-2 text-center"
-                >
-                  <p className="text-xs font-bold uppercase tracking-wide text-muted-foreground">
-                    {m.label}
-                  </p>
-                  <p className="mt-1 font-mono text-sm font-semibold text-foreground">
-                    {m.value}
-                  </p>
-                </div>
-              ))}
-            </div>
-          ) : null}
-        </div>
-      </details>
     </div>
   );
 }

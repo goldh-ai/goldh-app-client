@@ -12,6 +12,18 @@ export type CopyTradeMetric = {
 /** Present when `/trader/:id` includes risk_level (Low / Medium / High). */
 export type CopyTradeRiskLevel = "Low" | "Medium" | "High";
 
+/** Score stability classification from `score_explanation_summary.score_stability`. */
+export type CopyTradeScoreStability = "stable" | "moderate" | "volatile";
+
+/** A single parsed driver from `score_explanation_summary.top_3_drivers`. */
+export type CopyTradeScoreDriver = {
+  label: string;
+  /** Signed delta in points. Positive contributors lift the score, negative ones drag it down. */
+  delta: number | null;
+  /** Original API string (e.g. `"Consistency (+15pts)"`) preserved for tooltips. */
+  raw: string;
+};
+
 export type CopyTradeTraderDetail = CopyTradeTrader & {
   summary?: string;
   subscores: CopyTradeMetric[];
@@ -37,6 +49,16 @@ export type CopyTradeTraderDetail = CopyTradeTrader & {
   avgTradesPerMonth?: number | null;
   behavioralTags?: string[];
   generatedAt?: string | null;
+  /** Top contributors to the score, sourced from `score_explanation_summary.top_3_drivers`. */
+  topDrivers: CopyTradeScoreDriver[];
+  /** Plain-English signal trigger explanation, sourced from `score_explanation_summary.signal_reason`. */
+  signalReason?: string | null;
+  /** Plain-English confidence band explanation, sourced from `score_explanation_summary.confidence_reason`. */
+  confidenceReason?: string | null;
+  /** Stability classification of the score over time. */
+  scoreStability?: CopyTradeScoreStability | null;
+  /** True when the score was capped by a guardrail rule (e.g. drawdown cap). */
+  scoreCapApplied?: boolean;
 };
 
 type UnknownRecord = Record<string, unknown>;
@@ -162,6 +184,70 @@ function normalizeWinRateToPct(value: unknown): number | null {
   return Math.round(value * 10) / 10;
 }
 
+/**
+ * Parses a driver string like `"Consistency (+15pts)"` into a label + signed delta.
+ * Falls back gracefully when the format is unfamiliar so the UI can still surface the raw label.
+ */
+function parseScoreDriver(raw: string): CopyTradeScoreDriver | null {
+  const trimmed = raw.trim();
+  if (trimmed.length === 0) return null;
+  const match = trimmed.match(
+    /^(.*?)\s*\(([+-]?\d+(?:\.\d+)?)\s*pts?\s*\)\s*$/i,
+  );
+  if (match) {
+    const label = match[1]!.trim();
+    const delta = Number(match[2]);
+    return {
+      label: label.length > 0 ? label : trimmed,
+      delta: Number.isFinite(delta) ? delta : null,
+      raw: trimmed,
+    };
+  }
+  return { label: trimmed, delta: null, raw: trimmed };
+}
+
+function readTopDrivers(record: UnknownRecord): CopyTradeScoreDriver[] {
+  const value = record.top_3_drivers ?? record.topDrivers ?? record.top3Drivers;
+  if (!Array.isArray(value)) return [];
+  return value
+    .filter((entry): entry is string => typeof entry === "string")
+    .map(parseScoreDriver)
+    .filter((entry): entry is CopyTradeScoreDriver => entry !== null)
+    .slice(0, 3);
+}
+
+function readScoreStability(
+  record: UnknownRecord,
+): CopyTradeScoreStability | null {
+  const raw = readString(record, "score_stability", "scoreStability");
+  if (!raw) return null;
+  const normalized = raw.trim().toLowerCase();
+  if (
+    normalized === "stable" ||
+    normalized === "moderate" ||
+    normalized === "volatile"
+  ) {
+    return normalized;
+  }
+  return null;
+}
+
+function readBoolean(
+  record: UnknownRecord,
+  ...keys: string[]
+): boolean | undefined {
+  for (const key of keys) {
+    const raw = record[key];
+    if (typeof raw === "boolean") return raw;
+    if (typeof raw === "string") {
+      const lc = raw.trim().toLowerCase();
+      if (lc === "true") return true;
+      if (lc === "false") return false;
+    }
+  }
+  return undefined;
+}
+
 export function buildCopyTradeDetailFromPayload(
   payload: unknown,
   baseTrader?: CopyTradeTrader,
@@ -280,8 +366,14 @@ export function buildCopyTradeDetailFromPayload(
   const riskLevel = explicitRisk;
 
   const ses = asRecord(source.score_explanation_summary ?? {});
-  const signalReason = readString(ses, "signal_reason");
-  const confidenceReason = readString(ses, "confidence_reason");
+  const signalReason = readString(ses, "signal_reason") ?? null;
+  const confidenceReason = readString(ses, "confidence_reason") ?? null;
+  const topDrivers = readTopDrivers(ses);
+  const scoreStability = readScoreStability(ses);
+  const scoreCapApplied =
+    readBoolean(ses, "cap_applied", "capApplied") ??
+    readBoolean(source, "cap_applied", "capApplied") ??
+    false;
   const summary =
     ([signalReason, confidenceReason].filter(Boolean).join(" · ") ||
       readString(
@@ -365,5 +457,10 @@ export function buildCopyTradeDetailFromPayload(
     avgTradesPerMonth,
     behavioralTags,
     generatedAt,
+    topDrivers,
+    signalReason,
+    confidenceReason,
+    scoreStability,
+    scoreCapApplied,
   };
 }
