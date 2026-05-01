@@ -127,13 +127,15 @@ function getMetaHeadClass(meta: unknown): string | undefined {
   );
 }
 
-function isInteractiveElement(target: EventTarget | null): boolean {
+function isInteractiveElement(
+  target: EventTarget | null,
+  currentTarget?: EventTarget | null,
+): boolean {
   if (!(target instanceof HTMLElement)) return false;
-  return Boolean(
-    target.closest(
-      'button, a, input, select, textarea, [role="button"], [role="link"], [data-row-click-ignore="true"]',
-    ),
+  const interactive = target.closest(
+    'button, a, input, select, textarea, [role="button"], [role="link"], [data-row-click-ignore="true"]',
   );
+  return Boolean(interactive && interactive !== currentTarget);
 }
 
 function createRowClickHandler<TData>(
@@ -142,7 +144,7 @@ function createRowClickHandler<TData>(
 ) {
   return (e: MouseEvent<HTMLTableRowElement>) => {
     if (!onRowClick) return;
-    if (isInteractiveElement(e.target)) return;
+    if (isInteractiveElement(e.target, e.currentTarget)) return;
     onRowClick(row);
   };
 }
@@ -153,7 +155,7 @@ function createRowKeyDownHandler<TData>(
 ) {
   return (e: KeyboardEvent<HTMLTableRowElement>) => {
     if (!onRowClick) return;
-    if (isInteractiveElement(e.target)) return;
+    if (isInteractiveElement(e.target, e.currentTarget)) return;
     if (e.key !== "Enter" && e.key !== " ") return;
     e.preventDefault();
     onRowClick(row);
