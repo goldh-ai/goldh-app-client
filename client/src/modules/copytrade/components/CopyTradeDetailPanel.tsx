@@ -147,10 +147,10 @@ export function CopyTradeDetailPanel({
         onClose={onClose}
         handle={detail.handle}
         traderId={detail.traderId}
-        grade={detail.grade}
-        confidenceBand={detail.confidenceBand}
-        signalState={detail.signalState}
-        lifecycleState={detail.lifecycleState}
+        grade={detail.grade ?? selectedTrader?.grade}
+        confidenceBand={detail.confidenceBand ?? selectedTrader?.confidenceBand}
+        signalState={detail.signalState ?? selectedTrader?.signalState}
+        lifecycleState={detail.lifecycleState ?? selectedTrader?.lifecycleState}
         capacityFlag={detail.capacityFlag}
         lastUpdatedIso={headerTimestamp}
         monthsActive={detail.monthsActiveProfile}

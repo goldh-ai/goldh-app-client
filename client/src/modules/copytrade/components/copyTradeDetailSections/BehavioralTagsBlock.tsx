@@ -59,7 +59,7 @@ export function BehavioralTagsBlock({ detail, fillHeight = false }: BehavioralTa
         </div>
       ) : (
         <p className={cn("text-xs text-muted-foreground", fillHeight && "shrink-0 pt-1")}>
-          Behavioral tags are not available yet.
+          No behavioral tags info available yet.
         </p>
       )}
     </div>

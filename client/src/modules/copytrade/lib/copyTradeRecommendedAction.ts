@@ -24,7 +24,8 @@ export type CopyTradeRecommendedAction =
 export type CopyTradeRecommendationContext = {
   grade: CopyTradeGrade;
   confidenceBand: CopyTradeConfidenceBand;
-  signalState: CopyTradeSignalState;
+  /** Used only for richer copy later; action is still grade × confidence only. */
+  signalState?: CopyTradeSignalState | null;
   lifecycleState?: CopyTradeLifecycleState | null;
   capacityFlag?: CopyTradeCapacityFlag | null;
 };

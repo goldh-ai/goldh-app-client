@@ -16,6 +16,9 @@ type RiskProfileBlockProps = {
   fillHeight?: boolean;
 };
 
+const RISK_LEVEL_TOOLTIP =
+  "Rolls drawdown depth, win-rate steadiness, and capacity into one copy-sizing band. Lower is milder.";
+
 const RISK_TONE: Record<
   CopyTradeRiskLevel,
   { dotsFilled: number; tone: string }
@@ -77,7 +80,17 @@ function RiskTile({
           {children}
         </div>
       </TooltipTrigger>
-      <TooltipContent className="max-w-xs text-xs">{tooltip}</TooltipContent>
+      {/* Bottom + top collision padding: stay tied to tiles, not flipped into the sticky header band. */}
+      <TooltipContent
+        side="bottom"
+        align="center"
+        sideOffset={4}
+        sticky="always"
+        collisionPadding={{ top: 96 }}
+        className="max-w-xs text-xs"
+      >
+        {tooltip}
+      </TooltipContent>
     </UiTooltip>
   );
 }
@@ -85,8 +98,9 @@ function RiskTile({
 export function RiskProfileBlock({ detail, fillHeight = false }: RiskProfileBlockProps) {
   const dd = detail.maxDrawdownPct ?? null;
   const wr = detail.winRatePct ?? null;
-  const risk = (detail.riskLevel ?? "Medium") as CopyTradeRiskLevel;
-  const config = RISK_TONE[risk];
+  const risk = detail.riskLevel ?? null;
+  const hasRiskTier =
+    risk === "Low" || risk === "Medium" || risk === "High";
   const ddTone =
     dd != null && Math.abs(dd) > 20
       ? "text-rose-400"
@@ -128,13 +142,17 @@ export function RiskProfileBlock({ detail, fillHeight = false }: RiskProfileBloc
           />
           <RiskTile
             label="Risk level"
-            value={risk.toUpperCase()}
-            tone={config.tone}
-            tooltip="Composite view of confidence, capacity, and drawdown severity for copy sizing."
+            value={hasRiskTier ? risk.toUpperCase() : "—"}
+            tone={
+              hasRiskTier && risk ? RISK_TONE[risk].tone : "text-muted-foreground"
+            }
+            tooltip={RISK_LEVEL_TOOLTIP}
           >
-            <div className={cn("flex justify-center", config.tone)}>
-              <RiskMeter level={risk} />
-            </div>
+            {hasRiskTier && risk ? (
+              <div className={cn("flex justify-center", RISK_TONE[risk].tone)}>
+                <RiskMeter level={risk} />
+              </div>
+            ) : null}
           </RiskTile>
         </div>
       </div>

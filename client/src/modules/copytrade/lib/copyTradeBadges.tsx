@@ -143,9 +143,9 @@ const PROFILE_TAG_VISUALS: Record<string, ProfileTagVisual> = {
 
 const FALLBACK_PROFILE_VISUAL: ProfileTagVisual = {
   icon: "•",
-  label: "GENERAL",
-  shortLabel: "GEN",
-  description: "General strategy profile.",
+  label: "—",
+  shortLabel: "—",
+  description: "No profile info available.",
   className: "border-border bg-muted text-muted-foreground",
 };
 
@@ -157,11 +157,16 @@ export function getCopyTradeProfileVisual(
   profileTag: string | null | undefined,
 ): ProfileTagVisual {
   const key = normalizeProfileTag(profileTag);
-  return PROFILE_TAG_VISUALS[key] ?? {
-    ...FALLBACK_PROFILE_VISUAL,
-    label: key ? key.toUpperCase() : FALLBACK_PROFILE_VISUAL.label,
-    shortLabel: key ? key.toUpperCase().slice(0, 4) : FALLBACK_PROFILE_VISUAL.shortLabel,
-  };
+  return (
+    PROFILE_TAG_VISUALS[key] ?? {
+      ...FALLBACK_PROFILE_VISUAL,
+      label: key ? key.toUpperCase() : FALLBACK_PROFILE_VISUAL.label,
+      shortLabel: key ? key.toUpperCase().slice(0, 4) : FALLBACK_PROFILE_VISUAL.shortLabel,
+      description: key
+        ? "No profile description for this tag yet."
+        : FALLBACK_PROFILE_VISUAL.description,
+    }
+  );
 }
 
 export function CopyTradeProfileTagBadge({

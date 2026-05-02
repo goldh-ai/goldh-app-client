@@ -136,7 +136,7 @@ export function ScoreDriversBlock({ detail, fillHeight = false }: ScoreDriversBl
           </div>
         ) : (
           <p className="mt-2 text-xs text-muted-foreground">
-            Driver breakdown is not available yet.
+            No driver breakdown info available yet.
           </p>
         )}
       </div>

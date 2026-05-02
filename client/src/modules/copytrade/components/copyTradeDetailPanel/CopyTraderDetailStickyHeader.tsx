@@ -33,13 +33,24 @@ import {
 } from "../../lib/copyTradeRecommendedAction";
 import { CloseCorner } from "./CloseCorner";
 
+function HeaderClassificationPlaceholder({ label }: { label: string }) {
+  return (
+    <div
+      className="inline-flex h-7 w-full min-w-0 shrink-0 items-center justify-center rounded-md border border-dashed border-border bg-muted/25 text-[0.65rem] font-semibold uppercase tracking-wide text-muted-foreground"
+      aria-label={`No ${label.toLowerCase()} info available`}
+    >
+      —
+    </div>
+  );
+}
+
 type CopyTraderDetailStickyHeaderProps = {
   onClose: () => void;
   handle: string;
   traderId: string;
-  grade: CopyTradeGrade;
-  confidenceBand: CopyTradeConfidenceBand;
-  signalState: CopyTradeSignalState;
+  grade?: CopyTradeGrade;
+  confidenceBand?: CopyTradeConfidenceBand;
+  signalState?: CopyTradeSignalState;
   lifecycleState?: CopyTradeLifecycleState | null;
   capacityFlag: CopyTradeTraderDetail["capacityFlag"] | null | undefined;
   lastUpdatedIso: string;
@@ -125,16 +136,20 @@ export function CopyTraderDetailStickyHeader({
   scoreCapApplied,
 }: CopyTraderDetailStickyHeaderProps) {
   const profileVisual = getCopyTradeProfileVisual(profileTag);
-  const recommendation = getCopyTradeRecommendedAction({
-    grade,
-    confidenceBand,
-    signalState,
-    lifecycleState: lifecycleState ?? undefined,
-    capacityFlag: capacityFlag ?? undefined,
-  });
-  const { action, reason } = recommendation;
-  const actionLabel = COPYTRADE_RECOMMENDED_ACTION_LABEL[action];
-  const tone = actionTone[action];
+  const canRecommend = Boolean(grade && confidenceBand);
+  const recommendation = canRecommend
+    ? getCopyTradeRecommendedAction({
+      grade: grade!,
+      confidenceBand: confidenceBand!,
+      signalState,
+      lifecycleState: lifecycleState ?? undefined,
+      capacityFlag: capacityFlag ?? undefined,
+    })
+    : null;
+  const action = recommendation?.action;
+  const reason = recommendation?.reason;
+  const actionLabel = action ? COPYTRADE_RECOMMENDED_ACTION_LABEL[action] : "";
+  const tone = action ? actionTone[action] : null;
 
   const activitySummary =
     monthsActive != null && totalTrades != null
@@ -180,59 +195,82 @@ export function CopyTraderDetailStickyHeader({
         <CloseCorner onClose={onClose} />
       </div>
 
-      {/* Decision hero — placed second so the recommendation is the first thing the eye lands on after the trader name. */}
-      <TooltipProvider delayDuration={200}>
-        <Tooltip>
-          <TooltipTrigger asChild>
-            <div
-              className={cn(
-                "relative mt-3 cursor-default overflow-hidden rounded-2xl border px-3 py-3 shadow-md shadow-black/20 transition sm:px-4 sm:py-3.5",
-                tone.surface,
-              )}
-              role="status"
-              aria-label={`Recommended action: ${actionLabel}`}
-            >
+      {/* Decision hero — only when grade + confidence exist; never infer from defaults. */}
+      {canRecommend && recommendation && tone && action ? (
+        <TooltipProvider delayDuration={200}>
+          <Tooltip>
+            <TooltipTrigger asChild>
               <div
-                aria-hidden
-                className="pointer-events-none absolute inset-0 bg-gradient-to-br from-white/[0.06] via-transparent to-transparent"
-              />
-              <div className="relative flex items-center justify-between gap-3">
-                <div className="min-w-0 flex-1">
-                  <p className="text-[0.6rem] font-bold uppercase tracking-[0.22em] opacity-80">
-                    Recommended action
-                  </p>
-                  <p className="mt-1 text-2xl font-black leading-none tracking-tight">
-                    {tone.symbol} {actionLabel}
-                  </p>
-                  <p className={cn("mt-1.5 text-xs leading-snug", tone.rule)}>
-                    {reason}
-                  </p>
-                </div>
-                <div className="shrink-0 text-right">
-                  <p className="text-[0.6rem] font-bold uppercase tracking-[0.22em] opacity-80">
-                    Updated
-                  </p>
-                  <p className="mt-1 font-mono text-[0.7rem] font-semibold leading-tight">
-                    {fmtCopyTradeUpdated(lastUpdatedIso)}
-                  </p>
-                  <p className="mt-1 text-[0.65rem] font-medium opacity-80">
-                    {activitySummary}
-                  </p>
+                className={cn(
+                  "relative mt-3 cursor-default overflow-hidden rounded-2xl border px-3 py-3 shadow-md shadow-black/20 transition sm:px-4 sm:py-3.5",
+                  tone.surface,
+                )}
+                role="status"
+                aria-label={`Recommended action: ${actionLabel}`}
+              >
+                <div
+                  aria-hidden
+                  className="pointer-events-none absolute inset-0 bg-gradient-to-br from-white/[0.06] via-transparent to-transparent"
+                />
+                <div className="relative flex items-center justify-between gap-3">
+                  <div className="min-w-0 flex-1">
+                    <p className="text-[0.6rem] font-bold uppercase tracking-[0.22em] opacity-80">
+                      Recommended action
+                    </p>
+                    <p className="mt-1 text-2xl font-black leading-none tracking-tight">
+                      {tone.symbol} {actionLabel}
+                    </p>
+                    <p className={cn("mt-1.5 text-xs leading-snug", tone.rule)}>
+                      {reason}
+                    </p>
+                  </div>
+                  <div className="shrink-0 text-right">
+                    <p className="text-[0.6rem] font-bold uppercase tracking-[0.22em] opacity-80">
+                      Updated
+                    </p>
+                    <p className="mt-1 font-mono text-[0.7rem] font-semibold leading-tight">
+                      {fmtCopyTradeUpdated(lastUpdatedIso)}
+                    </p>
+                    <p className="mt-1 text-[0.65rem] font-medium opacity-80">
+                      {activitySummary}
+                    </p>
+                  </div>
                 </div>
               </div>
-            </div>
-          </TooltipTrigger>
-          <TooltipContent
-            side="bottom"
-            className="max-w-xs border border-border bg-popover text-xs text-popover-foreground"
-          >
-            <span className="block font-bold uppercase tracking-wider text-foreground">
-              {actionLabel}
+            </TooltipTrigger>
+            <TooltipContent
+              side="bottom"
+              className="max-w-xs border border-border bg-popover text-xs text-popover-foreground"
+            >
+              <span className="block font-bold uppercase tracking-wider text-foreground">
+                {actionLabel}
+              </span>
+              <span className="mt-1 block text-muted-foreground">{reason}</span>
+            </TooltipContent>
+          </Tooltip>
+        </TooltipProvider>
+      ) : (
+        <div
+          className="mt-3 rounded-2xl border border-dashed border-border/60 bg-muted/10 px-3 py-3 text-xs text-muted-foreground sm:px-4 sm:py-3.5"
+          role="status"
+          aria-label="No recommendation info available"
+        >
+          <p className="font-bold uppercase tracking-[0.18em] text-muted-foreground/90">
+            Recommended action
+          </p>
+          <p className="mt-1.5 leading-snug">
+            No recommendation available yet. We show one when grade and confidence are both available for
+            this trader.
+          </p>
+          <div className="mt-3 flex flex-wrap justify-end gap-x-4 gap-y-1 border-t border-border/40 pt-2.5 text-right text-[0.65rem] text-muted-foreground/90">
+            <span className="font-bold uppercase tracking-[0.15em]">Updated</span>
+            <span className="font-mono font-semibold tabular-nums text-foreground/90">
+              {fmtCopyTradeUpdated(lastUpdatedIso)}
             </span>
-            <span className="mt-1 block text-muted-foreground">{reason}</span>
-          </TooltipContent>
-        </Tooltip>
-      </TooltipProvider>
+            <span className="w-full text-[0.65rem] opacity-90 sm:w-auto">{activitySummary}</span>
+          </div>
+        </div>
+      )}
 
       {/* Compact metric strip — single row, no triple-stacked corner. */}
       <div className="mt-3 grid grid-cols-3 divide-x divide-border/45 overflow-hidden rounded-xl bg-muted/10 py-1 ring-1 ring-inset ring-border/35">
@@ -257,11 +295,23 @@ export function CopyTraderDetailStickyHeader({
         </div>
       ) : null}
 
-      {/* Status chips — grade / confidence / signal / capacity. */}
+      {/* Status chips — grade / confidence / signal / capacity (no invented enum values). */}
       <div className="mt-3 grid grid-cols-2 gap-2 sm:grid-cols-4">
-        <CopyTradeGradeBadge grade={grade} />
-        <CopyTradeConfidenceBadge band={confidenceBand} />
-        <CopyTradeSignalBadge state={signalState} />
+        {grade ? (
+          <CopyTradeGradeBadge grade={grade} />
+        ) : (
+          <HeaderClassificationPlaceholder label="Grade" />
+        )}
+        {confidenceBand ? (
+          <CopyTradeConfidenceBadge band={confidenceBand} />
+        ) : (
+          <HeaderClassificationPlaceholder label="Confidence" />
+        )}
+        {signalState ? (
+          <CopyTradeSignalBadge state={signalState} />
+        ) : (
+          <HeaderClassificationPlaceholder label="Signal" />
+        )}
         <CopyTradeCapacityBadge capacity={capacityFlag ?? null} />
       </div>
     </header>

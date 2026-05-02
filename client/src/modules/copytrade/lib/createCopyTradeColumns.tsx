@@ -266,7 +266,10 @@ export function createCopyTradeColumns(
         if (value === null) {
           return (
             <div className={institutionalTableCellInnerCenterClass}>
-              <p className={cn(institutionalTableCellTextClass, "text-sm")} title="Not available">
+              <p
+                className={cn(institutionalTableCellTextClass, "text-sm")}
+                title="No 7-day rank change info available"
+              >
                 —
               </p>
             </div>
@@ -305,13 +308,19 @@ export function createCopyTradeColumns(
     columnHelper.accessor("profileTag", {
       header: () => <StaticHeader label="Profile" align="center" />,
       enableSorting: false,
-      cell: (info) => (
-        <div className={institutionalTableCellInnerCenterClass}>
-          <p className="w-full truncate text-center text-xs font-medium uppercase tracking-wide text-muted-foreground">
-            {info.getValue() ?? "General"}
-          </p>
-        </div>
-      ),
+      cell: (info) => {
+        const tag = info.getValue();
+        return (
+          <div className={institutionalTableCellInnerCenterClass}>
+            <p
+              className="w-full truncate text-center text-xs font-medium uppercase tracking-wide text-muted-foreground"
+              title={tag ? undefined : "No profile info available"}
+            >
+              {tag ?? "—"}
+            </p>
+          </div>
+        );
+      },
       meta: { arbHeadClass: "min-w-[5.25rem]", arbCellClass: "min-w-[5.25rem]" },
     }),
     columnHelper.accessor("capacityFlag", {

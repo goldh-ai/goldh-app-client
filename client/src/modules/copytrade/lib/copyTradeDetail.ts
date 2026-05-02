@@ -1,4 +1,10 @@
-import type { CopyTradeTrader } from "@shared/types";
+import type {
+  CopyTradeConfidenceBand,
+  CopyTradeGrade,
+  CopyTradeLifecycleState,
+  CopyTradeSignalState,
+  CopyTradeTrader,
+} from "@shared/types";
 import type {
   CopyTradePerformancePoint,
   CopyTradeScoreTrendPoint,
@@ -24,7 +30,20 @@ export type CopyTradeScoreDriver = {
   raw: string;
 };
 
-export type CopyTradeTraderDetail = CopyTradeTrader & {
+/**
+ * Detail can omit grade / confidence / signal / lifecycle when the payload and
+ * list-row merge do not supply them — we do **not** invent Low/Medium/C etc. on
+ * the DTO. UI merges from the leaderboard row for display where needed.
+ */
+export type CopyTradeTraderDetail = Omit<
+  CopyTradeTrader,
+  "grade" | "confidenceBand" | "signalState" | "lifecycleState"
+> & {
+  grade?: CopyTradeGrade;
+  confidenceBand?: CopyTradeConfidenceBand;
+  signalState?: CopyTradeSignalState;
+  lifecycleState?: CopyTradeLifecycleState | null;
+} & {
   summary?: string;
   subscores: CopyTradeMetric[];
   vendorMetrics: CopyTradeMetric[];
@@ -121,7 +140,7 @@ function fmtMetricValue(value: unknown): string {
     return Number.isInteger(value) ? String(value) : value.toFixed(2);
   if (typeof value === "boolean") return value ? "Yes" : "No";
   if (typeof value === "string") return value;
-  if (value === null || value === undefined) return "N/A";
+  if (value === null || value === undefined) return "—";
   return String(value);
 }
 
@@ -170,8 +189,8 @@ function toNumberArray(value: unknown): number[] {
 function normalizeEnum<T extends readonly string[]>(
   value: string | undefined,
   allowed: T,
-  fallback: T[number],
-): T[number] {
+  fallback: T[number] | undefined,
+): T[number] | undefined {
   if (!value) return fallback;
   return (allowed as readonly string[]).includes(value)
     ? (value as T[number])
@@ -310,22 +329,22 @@ export function buildCopyTradeDetailFromPayload(
   const grade = normalizeEnum(
     readString(source, "grade"),
     ["A", "B", "C", "D", "F"] as const,
-    baseTrader?.grade ?? "C",
+    baseTrader?.grade,
   );
   const confidenceBand = normalizeEnum(
     readString(source, "confidence_band", "confidenceBand"),
     ["High", "Medium", "Low"] as const,
-    baseTrader?.confidenceBand ?? "Medium",
+    baseTrader?.confidenceBand,
   );
   const signalState = normalizeEnum(
     readString(source, "signal_state", "signalState"),
     ["Strong", "Moderate", "Weak", "Invalid"] as const,
-    baseTrader?.signalState ?? "Weak",
+    baseTrader?.signalState,
   );
   const lifecycleState = normalizeEnum(
     readString(source, "lifecycle_state", "lifecycleState"),
     ["active", "inactive", "reintroduced"] as const,
-    baseTrader?.lifecycleState ?? "inactive",
+    baseTrader?.lifecycleState ?? undefined,
   );
 
   const riskRaw = readString(source, "risk_level", "riskLevel");
