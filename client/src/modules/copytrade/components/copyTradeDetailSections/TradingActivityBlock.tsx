@@ -5,6 +5,7 @@ import { getCopyTradeProfileVisual } from "../../lib/copyTradeBadges";
 
 type TradingActivityBlockProps = {
   detail: CopyTradeTraderDetail;
+  fillHeight?: boolean;
 };
 
 function StatTile({
@@ -19,11 +20,11 @@ function StatTile({
   accent?: boolean;
 }) {
   return (
-    <div className="flex items-start gap-3 rounded-lg border border-border bg-card px-3 py-2.5">
+    <div className="flex h-full min-h-[5.25rem] items-center gap-3 px-3 py-3 sm:min-h-0 sm:px-4 sm:py-3.5">
       <div
         className={cn(
-          "flex h-8 w-8 shrink-0 items-center justify-center rounded-md border border-border",
-          accent ? "bg-primary/15 text-primary" : "bg-muted/40 text-muted-foreground",
+          "flex h-9 w-9 shrink-0 items-center justify-center rounded-lg",
+          accent ? "bg-primary/20 text-primary shadow-sm" : "bg-background/50 text-muted-foreground ring-1 ring-inset ring-border/30",
         )}
       >
         {icon}
@@ -40,30 +41,42 @@ function StatTile({
   );
 }
 
-export function TradingActivityBlock({ detail }: TradingActivityBlockProps) {
+export function TradingActivityBlock({ detail, fillHeight = false }: TradingActivityBlockProps) {
   const trades = detail.totalTradesProfile ?? null;
   const months = detail.monthsActiveProfile ?? null;
   const strategyVisual = getCopyTradeProfileVisual(detail.strategyLabel);
   const strategyLabel = `${strategyVisual.icon} ${strategyVisual.label}`;
 
   return (
-    <div className="grid grid-cols-1 gap-2 sm:grid-cols-3">
-      <StatTile
-        label="Total trades"
-        value={trades == null ? "—" : trades.toLocaleString()}
-        icon={<Repeat className="h-4 w-4" />}
-      />
-      <StatTile
-        label="Months active"
-        value={months == null ? "—" : `${months} mo`}
-        icon={<CalendarRange className="h-4 w-4" />}
-      />
-      <StatTile
-        label="Strategy"
-        value={strategyLabel}
-        icon={<Layers className="h-4 w-4" />}
-        accent
-      />
+    <div
+      className={cn(
+        "overflow-hidden rounded-2xl bg-muted/10 ring-1 ring-inset ring-border/35",
+        fillHeight && "flex min-h-0 flex-1 flex-col",
+      )}
+    >
+      <div
+        className={cn(
+          "grid grid-cols-1 divide-y divide-border/45 sm:grid-cols-3 sm:divide-x sm:divide-y-0 sm:items-stretch",
+          fillHeight && "min-h-0 flex-1 sm:min-h-[6.75rem]",
+        )}
+      >
+        <StatTile
+          label="Total trades"
+          value={trades == null ? "—" : trades.toLocaleString()}
+          icon={<Repeat className="h-4 w-4" />}
+        />
+        <StatTile
+          label="Months active"
+          value={months == null ? "—" : `${months} mo`}
+          icon={<CalendarRange className="h-4 w-4" />}
+        />
+        <StatTile
+          label="Strategy"
+          value={strategyLabel}
+          icon={<Layers className="h-4 w-4" />}
+          accent
+        />
+      </div>
     </div>
   );
 }

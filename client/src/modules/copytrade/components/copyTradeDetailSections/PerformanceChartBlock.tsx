@@ -39,12 +39,12 @@ export function PerformanceChartBlock({
   }, [points]);
 
   if (isLoading && points.length < 2) {
-    return <Skeleton className="h-44 w-full rounded-lg bg-muted/40" />;
+    return <Skeleton className="h-52 w-full rounded-xl bg-muted/40 sm:h-60" />;
   }
 
   if (hasError) {
     return (
-      <div className="flex h-44 items-center justify-center rounded-lg border border-amber-500/30 bg-amber-500/5 px-3">
+      <div className="flex h-52 items-center justify-center rounded-xl border border-amber-500/30 bg-amber-500/5 px-3 sm:h-60">
         <p className="text-center text-xs text-amber-200">
           Performance history unavailable.
         </p>
@@ -54,7 +54,7 @@ export function PerformanceChartBlock({
 
   if (points.length < 2) {
     return (
-      <div className="flex h-44 items-center justify-center rounded-lg border border-border bg-background">
+      <div className="flex h-52 items-center justify-center rounded-xl border border-border/60 bg-muted/10 sm:h-60">
         <p className="text-xs text-muted-foreground">No ROI history to chart yet.</p>
       </div>
     );
@@ -79,7 +79,7 @@ export function PerformanceChartBlock({
         </div>
       ) : null}
 
-      <div className="h-44 w-full rounded-lg border border-border bg-background p-2">
+      <div className="h-52 w-full rounded-xl bg-muted/15 p-2 ring-1 ring-inset ring-border/35 sm:h-60">
         <ResponsiveContainer width="100%" height="100%">
           <AreaChart
             data={points}

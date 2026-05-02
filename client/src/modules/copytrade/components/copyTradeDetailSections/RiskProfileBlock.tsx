@@ -12,6 +12,8 @@ import type {
 
 type RiskProfileBlockProps = {
   detail: CopyTradeTraderDetail;
+  /** Stretch with paired column (insight panel) to remove dead vertical space. */
+  fillHeight?: boolean;
 };
 
 const RISK_TONE: Record<
@@ -60,7 +62,7 @@ function RiskTile({
   return (
     <UiTooltip>
       <TooltipTrigger asChild>
-        <div className="cursor-default rounded-xl border border-border bg-card px-3 py-3 text-center transition hover:border-primary/35">
+        <div className="flex h-full min-h-[6.25rem] w-full flex-col items-center justify-center px-3 py-3 text-center transition hover:bg-background/35 sm:min-h-0 sm:px-4 sm:py-4">
           <p className="text-[0.6rem] font-bold uppercase tracking-[0.18em] text-muted-foreground">
             {label}
           </p>
@@ -80,7 +82,7 @@ function RiskTile({
   );
 }
 
-export function RiskProfileBlock({ detail }: RiskProfileBlockProps) {
+export function RiskProfileBlock({ detail, fillHeight = false }: RiskProfileBlockProps) {
   const dd = detail.maxDrawdownPct ?? null;
   const wr = detail.winRatePct ?? null;
   const risk = (detail.riskLevel ?? "Medium") as CopyTradeRiskLevel;
@@ -100,8 +102,18 @@ export function RiskProfileBlock({ detail }: RiskProfileBlockProps) {
 
   return (
     <TooltipProvider delayDuration={150}>
-      <div className="space-y-3">
-        <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
+      <div
+        className={cn(
+          "overflow-hidden rounded-2xl bg-muted/10 ring-1 ring-inset ring-border/35",
+          fillHeight && "flex min-h-0 flex-1 flex-col",
+        )}
+      >
+        <div
+          className={cn(
+            "grid grid-cols-1 divide-y divide-border/45 sm:grid-cols-3 sm:divide-x sm:divide-y-0 sm:items-stretch",
+            fillHeight && "min-h-0 flex-1 sm:min-h-[6.75rem]",
+          )}
+        >
           <RiskTile
             label="Max drawdown"
             value={dd == null ? "—" : `−${Math.abs(dd).toFixed(1)}%`}

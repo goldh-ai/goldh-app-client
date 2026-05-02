@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useMemo, useState, type ReactNode } from "react";
 import { cn } from "@/lib/utils";
 import type { CopyTradeTraderDetail } from "../lib/copyTradeDetail";
 import type {
@@ -6,12 +6,15 @@ import type {
   CopyTradeScoreTrendPoint,
 } from "../lib/copyTradeHistoryTransforms";
 import {
+  CopyTradeDetailColumnHeader,
+  CopyTradeDetailInsightPanel,
+} from "./CopyTradeDetailInsightPanel";
+import {
   BehavioralTagsBlock,
   PerformanceChartBlock,
   RiskProfileBlock,
   ScoreDriversBlock,
   ScoreTrendChartBlock,
-  SectionShell,
   TradingActivityBlock,
 } from "./copyTradeDetailSections/index";
 
@@ -41,6 +44,47 @@ function pickPerformance(
       ? detail.performance365
       : [];
   return [];
+}
+
+function InsightColumn({ header, body }: { header: ReactNode; body: ReactNode }) {
+  return (
+    <div className="flex h-full min-h-0 flex-col">
+      <div className="shrink-0">{header}</div>
+      <div className="mt-3 flex min-h-0 flex-1 flex-col">{body}</div>
+    </div>
+  );
+}
+
+function RangeToggle<T extends string | number>({
+  value,
+  onChange,
+  options,
+  format,
+}: {
+  value: T;
+  onChange: (next: T) => void;
+  options: readonly T[];
+  format: (key: T) => string;
+}) {
+  return (
+    <div className="inline-flex rounded-lg border border-border/60 bg-background/60 p-0.5 shadow-inner shadow-black/20">
+      {options.map((key) => (
+        <button
+          key={String(key)}
+          type="button"
+          onClick={() => onChange(key)}
+          className={cn(
+            "rounded-md px-2.5 py-1 text-xs font-bold uppercase tracking-wider transition",
+            value === key
+              ? "bg-primary text-primary-foreground shadow-sm"
+              : "text-muted-foreground hover:text-foreground",
+          )}
+        >
+          {format(key)}
+        </button>
+      ))}
+    </div>
+  );
 }
 
 export type CopyTradeDetailSectionsProps = {
@@ -79,100 +123,111 @@ export function CopyTradeDetailSections({
         : historyError365;
 
   return (
-    <div className="space-y-3">
-      {/* Score story — chart + drivers, paired so the user can see "is it stable" and "why" together. */}
-      <div className="grid grid-cols-1 gap-3 xl:grid-cols-2">
-        <SectionShell
-          title="Is the score consistent?"
-          subtitle="Score trend over the selected window"
-          right={
-            <div className="inline-flex rounded-md border border-border bg-muted/40 p-0.5">
-              {([30, 90] as const).map((d) => (
-                <button
-                  key={d}
-                  type="button"
-                  onClick={() => setScoreRange(d)}
-                  className={cn(
-                    "rounded px-2.5 py-1 text-xs font-bold uppercase tracking-wider",
-                    scoreRange === d
-                      ? "bg-primary text-primary-foreground"
-                      : "text-muted-foreground hover:text-foreground",
-                  )}
-                >
-                  {d}d
-                </button>
-              ))}
+    <div className="space-y-4">
+      <CopyTradeDetailInsightPanel
+        eyebrow="Trajectory"
+        left={
+          <>
+            <CopyTradeDetailColumnHeader
+              title="Is the score consistent?"
+              subtitle="Score trend over the selected window"
+              right={
+                <RangeToggle
+                  value={scoreRange}
+                  onChange={setScoreRange}
+                  options={[30, 90] as const}
+                  format={(d) => `${d}d`}
+                />
+              }
+            />
+            <div className="mt-3">
+              <ScoreTrendChartBlock
+                points={scorePoints}
+                isLoading={isHistoryFetching}
+                hasError={scoreErr}
+                stability={detail.scoreStability}
+              />
             </div>
-          }
-        >
-          <ScoreTrendChartBlock
-            points={scorePoints}
-            isLoading={isHistoryFetching}
-            hasError={scoreErr}
-            stability={detail.scoreStability}
-          />
-        </SectionShell>
-
-        <SectionShell
-          title="How have they performed?"
-          subtitle="Equity curve from cumulative ROI"
-          right={
-            <div className="inline-flex rounded-md border border-border bg-muted/40 p-0.5">
-              {(["30d", "90d", "all"] as const).map((k) => (
-                <button
-                  key={k}
-                  type="button"
-                  onClick={() => setPerfRange(k)}
-                  className={cn(
-                    "rounded px-2 py-1 text-xs font-bold uppercase tracking-wider",
-                    perfRange === k
-                      ? "bg-primary text-primary-foreground"
-                      : "text-muted-foreground hover:text-foreground",
-                  )}
-                >
-                  {k === "all" ? "All" : k.toUpperCase()}
-                </button>
-              ))}
+          </>
+        }
+        right={
+          <>
+            <CopyTradeDetailColumnHeader
+              title="How have they performed?"
+              subtitle="Equity curve from cumulative ROI"
+              right={
+                <RangeToggle
+                  value={perfRange}
+                  onChange={setPerfRange}
+                  options={["30d", "90d", "all"] as const}
+                  format={(k) => (k === "all" ? "All" : k.toUpperCase())}
+                />
+              }
+            />
+            <div className="mt-3">
+              <PerformanceChartBlock
+                points={perfPoints}
+                isLoading={isHistoryFetching}
+                hasError={perfErr}
+              />
             </div>
-          }
-        >
-          <PerformanceChartBlock
-            points={perfPoints}
-            isLoading={isHistoryFetching}
-            hasError={perfErr}
+          </>
+        }
+      />
+
+      <CopyTradeDetailInsightPanel
+        balanceColumnHeights
+        eyebrow="Explainability & risk"
+        left={
+          <InsightColumn
+            header={
+              <CopyTradeDetailColumnHeader
+                title="Why this grade?"
+                subtitle="Top contributors to the score"
+              />
+            }
+            body={<ScoreDriversBlock detail={detail} fillHeight />}
           />
-        </SectionShell>
-      </div>
+        }
+        right={
+          <InsightColumn
+            header={
+              <CopyTradeDetailColumnHeader
+                title="Should I worry about losses?"
+                subtitle="Drawdown, win rate, and overall risk"
+              />
+            }
+            body={<RiskProfileBlock detail={detail} fillHeight />}
+          />
+        }
+      />
 
-      <div className="grid grid-cols-1 gap-3 xl:grid-cols-2">
-        <SectionShell
-          title="Why this grade?"
-          subtitle="Top contributors to the score"
-        >
-          <ScoreDriversBlock detail={detail} />
-        </SectionShell>
-
-        <SectionShell
-          title="Should I worry about losses?"
-          subtitle="Drawdown, win rate, and overall risk"
-        >
-          <RiskProfileBlock detail={detail} />
-        </SectionShell>
-      </div>
-
-      <SectionShell
-        title="Are they active enough?"
-        subtitle="Trade volume, tenure, and stated style"
-      >
-        <TradingActivityBlock detail={detail} />
-      </SectionShell>
-
-      <SectionShell
-        title="How do they trade?"
-        subtitle="Profile type and behavioral tags"
-      >
-        <BehavioralTagsBlock detail={detail} />
-      </SectionShell>
+      <CopyTradeDetailInsightPanel
+        balanceColumnHeights
+        eyebrow="Rhythm & style"
+        left={
+          <InsightColumn
+            header={
+              <CopyTradeDetailColumnHeader
+                title="Are they active enough?"
+                subtitle="Trade volume, tenure, and stated style"
+              />
+            }
+            body={<TradingActivityBlock detail={detail} fillHeight />}
+          />
+        }
+        right={
+          <InsightColumn
+            header={
+              <CopyTradeDetailColumnHeader
+                title="How do they trade?"
+                subtitle="Profile type and behavioral tags"
+              />
+            }
+            body={<BehavioralTagsBlock detail={detail} fillHeight />}
+          />
+        }
+      />
     </div>
   );
 }

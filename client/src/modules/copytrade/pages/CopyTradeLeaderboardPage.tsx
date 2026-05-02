@@ -453,7 +453,7 @@ export default function CopyTradeLeaderboardPage() {
               onClick={() => setIsDetailOpen(false)}
               aria-hidden
             />
-            <div className="fixed inset-y-0 right-0 z-50 w-full border-l border-border bg-background shadow-2xl md:w-[760px] xl:w-[840px]">
+            <div className="fixed inset-y-0 right-0 z-50 w-full max-w-[min(100vw,1080px)] border-l border-border bg-background shadow-2xl md:w-[min(92vw,920px)] xl:w-[min(88vw,1000px)]">
               <CopyTradeDetailPanel
                 selectedTrader={selectedTrader}
                 detail={selectedTraderDetail}

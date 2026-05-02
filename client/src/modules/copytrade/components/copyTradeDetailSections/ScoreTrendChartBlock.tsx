@@ -36,18 +36,20 @@ const STABILITY_TONE: Record<
   { dot: string; surface: string; label: string }
 > = {
   stable: {
-    dot: "bg-emerald-400",
-    surface: "border-emerald-500/35 bg-emerald-500/10 text-emerald-200",
+    dot: "bg-emerald-300",
+    surface:
+      "border-emerald-600/60 bg-emerald-950/90 text-emerald-50 shadow-sm dark:border-emerald-500/45",
     label: "Stable",
   },
   moderate: {
-    dot: "bg-amber-400",
-    surface: "border-amber-500/35 bg-amber-500/10 text-amber-200",
+    dot: "bg-amber-300",
+    surface:
+      "border-amber-600/55 bg-amber-950/90 text-amber-50 shadow-sm dark:border-amber-500/40",
     label: "Moderate",
   },
   volatile: {
-    dot: "bg-rose-400",
-    surface: "border-rose-500/35 bg-rose-500/10 text-rose-200",
+    dot: "bg-rose-300",
+    surface: "border-rose-600/60 bg-rose-950/90 text-rose-50 shadow-sm dark:border-rose-500/45",
     label: "Volatile",
   },
 };
@@ -73,12 +75,12 @@ export function ScoreTrendChartBlock({
   }, [points]);
 
   if (isLoading && points.length < 2) {
-    return <Skeleton className="h-44 w-full rounded-lg bg-muted/40" />;
+    return <Skeleton className="h-52 w-full rounded-xl bg-muted/40 sm:h-60" />;
   }
 
   if (hasError) {
     return (
-      <div className="flex h-44 items-center justify-center rounded-lg border border-amber-500/30 bg-amber-500/5 px-3">
+      <div className="flex h-52 items-center justify-center rounded-xl border border-amber-500/30 bg-amber-500/5 px-3 sm:h-60">
         <p className="text-center text-xs text-amber-200">
           Score history temporarily unavailable.
         </p>
@@ -88,7 +90,7 @@ export function ScoreTrendChartBlock({
 
   if (points.length < 2) {
     return (
-      <div className="flex h-44 items-center justify-center rounded-lg border border-border bg-background">
+      <div className="flex h-52 items-center justify-center rounded-xl border border-border/60 bg-muted/10 sm:h-60">
         <p className="text-xs text-muted-foreground">
           Not enough history to plot score trend.
         </p>
@@ -137,7 +139,7 @@ export function ScoreTrendChartBlock({
         </span>
       </div>
 
-      <div className="h-44 w-full rounded-lg border border-border bg-background p-2">
+      <div className="h-52 w-full rounded-xl bg-muted/15 p-2 ring-1 ring-inset ring-border/35 sm:h-60">
         <ResponsiveContainer width="100%" height="100%">
           <LineChart
             data={points}

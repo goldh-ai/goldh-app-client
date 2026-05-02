@@ -162,7 +162,7 @@ export function CopyTradeDetailPanel({
         scoreCapApplied={detail.scoreCapApplied}
       />
 
-      <div className="min-h-0 flex-1 overflow-y-auto px-5 pb-8 pt-4">
+      <div className="min-h-0 flex-1 overflow-y-auto bg-[radial-gradient(ellipse_85%_50%_at_50%_-8%,hsl(var(--primary)/0.09),transparent_58%)] px-5 pb-10 pt-5">
         <CopyTradeDetailSections
           detail={detail}
           isHistoryFetching={isHistoryFetching}

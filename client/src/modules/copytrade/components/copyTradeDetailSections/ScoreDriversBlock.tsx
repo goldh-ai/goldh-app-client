@@ -7,6 +7,7 @@ import type {
 
 type ScoreDriversBlockProps = {
   detail: CopyTradeTraderDetail;
+  fillHeight?: boolean;
 };
 
 /**
@@ -95,7 +96,7 @@ function DriverRow({
 
 function ReasonChip({ label, value }: { label: string; value: string }) {
   return (
-    <div className="rounded-lg border border-border bg-card px-2.5 py-2">
+    <div className="rounded-lg bg-muted/20 px-2.5 py-2 ring-1 ring-inset ring-border/25">
       <p className="text-[0.6rem] font-bold uppercase tracking-[0.18em] text-muted-foreground">
         {label}
       </p>
@@ -104,7 +105,7 @@ function ReasonChip({ label, value }: { label: string; value: string }) {
   );
 }
 
-export function ScoreDriversBlock({ detail }: ScoreDriversBlockProps) {
+export function ScoreDriversBlock({ detail, fillHeight = false }: ScoreDriversBlockProps) {
   const drivers =
     detail.topDrivers.length > 0
       ? detail.topDrivers
@@ -117,8 +118,13 @@ export function ScoreDriversBlock({ detail }: ScoreDriversBlockProps) {
     Boolean(detail.signalReason) || Boolean(detail.confidenceReason);
 
   return (
-    <div className="space-y-3">
-      <div className="rounded-lg border border-border bg-card px-3 py-2.5">
+    <div className={cn("space-y-3", fillHeight && "flex min-h-0 flex-1 flex-col")}>
+      <div
+        className={cn(
+          "rounded-xl bg-muted/10 px-3 py-2.5 ring-1 ring-inset ring-border/30",
+          fillHeight && "min-h-0 flex-1",
+        )}
+      >
         <p className="text-[0.6rem] font-bold uppercase tracking-[0.18em] text-primary/90">
           Top contributors
         </p>
@@ -136,7 +142,7 @@ export function ScoreDriversBlock({ detail }: ScoreDriversBlockProps) {
       </div>
 
       {hasReasons ? (
-        <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
+        <div className={cn("grid grid-cols-1 gap-2 sm:grid-cols-2", fillHeight && "shrink-0")}>
           {detail.signalReason ? (
             <ReasonChip label="Signal" value={detail.signalReason} />
           ) : null}
@@ -147,7 +153,12 @@ export function ScoreDriversBlock({ detail }: ScoreDriversBlockProps) {
       ) : null}
 
       {detail.scoreCapApplied ? (
-        <div className="flex items-start gap-2 rounded-md border border-amber-500/35 bg-amber-500/10 px-3 py-2 text-xs text-amber-200">
+        <div
+          className={cn(
+            "flex items-start gap-2 rounded-md border border-amber-500/35 bg-amber-500/10 px-3 py-2 text-xs text-amber-200",
+            fillHeight && "shrink-0",
+          )}
+        >
           <ShieldAlert className="mt-0.5 h-3.5 w-3.5 shrink-0" />
           <span>
             Score was capped by a guardrail rule — actual quality may sit above the
@@ -156,7 +167,12 @@ export function ScoreDriversBlock({ detail }: ScoreDriversBlockProps) {
         </div>
       ) : null}
 
-      <p className="flex items-center gap-2 text-xs text-muted-foreground">
+      <p
+        className={cn(
+          "flex items-center gap-2 text-xs text-muted-foreground",
+          fillHeight && "mt-auto border-t border-border/30 pt-3",
+        )}
+      >
         <Sparkles className="h-3.5 w-3.5 shrink-0 text-primary" />
         Drivers and reasons sourced directly from the score explanation snapshot.
       </p>
