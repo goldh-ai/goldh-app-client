@@ -129,7 +129,8 @@ const PROFILE_TAG_VISUALS: Record<string, ProfileTagVisual> = {
     label: "HEDGED",
     shortLabel: "HEDGE",
     description: "Risk-protected approach using offsetting exposure.",
-    className: "border-chart-4/65 bg-chart-4 text-chart-4-foreground",
+    className:
+      "border-emerald-700/55 bg-emerald-950 text-emerald-50 shadow-sm dark:border-emerald-500/40",
   },
   arbitrage: {
     icon: "⚖️",

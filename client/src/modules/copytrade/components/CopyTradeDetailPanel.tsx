@@ -125,9 +125,13 @@ export function CopyTradeDetailPanel({
           momentum={selectedTrader.momentum}
           computedRank={selectedTrader.computedRank}
         />
-        <div className="min-h-0 flex-1 overflow-y-auto p-5">
-          <p className="text-xs font-black uppercase tracking-wider text-primary">Loading detail</p>
-          <div className="mt-4 space-y-3">
+        <div
+          className="min-h-0 flex-1 overflow-y-auto p-5"
+          aria-busy="true"
+          aria-live="polite"
+        >
+          <span className="sr-only">Loading trader detail</span>
+          <div className="space-y-3">
             <div className="h-52 animate-pulse rounded-xl bg-muted/40" />
             <div className="h-32 animate-pulse rounded-xl bg-muted/40" />
             <div className="h-40 animate-pulse rounded-xl bg-muted/40" />

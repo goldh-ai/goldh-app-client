@@ -83,7 +83,7 @@ export function PerformanceChartBlock({
         <ResponsiveContainer width="100%" height="100%">
           <AreaChart
             data={points}
-            margin={{ top: 8, right: 8, left: 0, bottom: 0 }}
+            margin={{ top: 8, right: 8, left: 2, bottom: 4 }}
           >
             <defs>
               <linearGradient id="copytradePerfFill" x1="0" y1="0" x2="0" y2="1">
@@ -99,6 +99,7 @@ export function PerformanceChartBlock({
               axisLine={{ stroke: CHART_GRID }}
               tickLine={false}
               interval="preserveStartEnd"
+              padding={{ left: 6, right: 6 }}
             />
             <YAxis
               tick={{ fill: CHART_TICK, fontSize: 10 }}

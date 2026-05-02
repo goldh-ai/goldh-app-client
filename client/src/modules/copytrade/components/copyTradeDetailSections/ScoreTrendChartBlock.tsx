@@ -141,7 +141,7 @@ export function ScoreTrendChartBlock({
         <ResponsiveContainer width="100%" height="100%">
           <LineChart
             data={points}
-            margin={{ top: 16, right: 12, left: 0, bottom: 4 }}
+            margin={{ top: 16, right: 12, left: 2, bottom: 4 }}
           >
             <CartesianGrid
               strokeDasharray="3 3"
@@ -155,6 +155,7 @@ export function ScoreTrendChartBlock({
               tick={{ fill: CHART_TICK, fontSize: 10 }}
               axisLine={{ stroke: CHART_GRID }}
               tickLine={false}
+              padding={{ left: 6, right: 6 }}
             />
             <YAxis
               domain={[0, 100]}
