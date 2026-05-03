@@ -44,6 +44,7 @@ export type CopyTradeLeaderboardRequest = {
   confidence?: string;
   signal?: string;
   capacity?: string;
+  search?: string;
   pageSize?: number;
   cursor?: string;
   sortBy?: CopyTradeSortByApi;
@@ -66,6 +67,8 @@ function buildLeaderboardQueryString(
     params.append("signal", query.signal);
   if (query.capacity && query.capacity !== "all")
     params.append("capacity", query.capacity);
+  const search = query.search?.trim();
+  if (search) params.set("search", search);
   if (typeof query.pageSize === "number" && query.pageSize > 0)
     params.set("pageSize", String(query.pageSize));
   if (query.cursor) params.set("cursor", query.cursor);
@@ -147,7 +150,6 @@ export async function fetchCopyTradeTraderHistory(
   return parseCopyTradeHistoryPayload(json);
 }
 
-/** Maps live history rows into chart-ready structures merged onto trader detail. */
 export function mergeCopyTradeHistoryIntoDetail(
   detail: CopyTradeTraderDetail,
   records30: CopyTradeHistoryRecord[],

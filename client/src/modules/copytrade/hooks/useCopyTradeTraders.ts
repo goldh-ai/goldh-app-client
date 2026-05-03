@@ -3,6 +3,7 @@ import { useQuery } from "@tanstack/react-query";
 import type { CopyTradeSortByApi } from "@shared/types";
 import { isCopyTradeMockEnabled } from "@/lib/copyTradeMock";
 import { fetchCopyTradeLeaderboard } from "../lib/copyTradeApi";
+import { traderMatchesCopyTradeSearch } from "../lib/copyTradeFilters";
 import { sortCopyTradeTradersForDisplay } from "../lib/copyTradeSort";
 
 type UseCopyTradeTradersArgs = {
@@ -11,6 +12,7 @@ type UseCopyTradeTradersArgs = {
   confidence: string;
   signal: string;
   capacity: string;
+  traderSearch: string;
   sortBy: CopyTradeSortByApi;
   pageSize: number;
   cursor?: string | null;
@@ -45,6 +47,7 @@ export function useCopyTradeTraders(args: UseCopyTradeTradersArgs) {
       args.confidence,
       args.signal,
       args.capacity,
+      args.traderSearch.trim(),
       args.sortBy,
       args.pageSize,
       args.cursor ?? null,
@@ -55,6 +58,7 @@ export function useCopyTradeTraders(args: UseCopyTradeTradersArgs) {
         confidence: args.confidence,
         signal: args.signal,
         capacity: args.capacity,
+        search: args.traderSearch.trim() || undefined,
         sortBy: args.sortBy,
         pageSize: args.pageSize,
         cursor: args.cursor ?? undefined,
@@ -64,13 +68,18 @@ export function useCopyTradeTraders(args: UseCopyTradeTradersArgs) {
   });
 
   const mockRows = useMemo(() => {
-    const rows = (mockQuery.data ?? []).filter(
+    let rows = (mockQuery.data ?? []).filter(
       (row) =>
         matchesFilter(row.grade, args.grade) &&
         matchesFilter(row.confidenceBand, args.confidence) &&
         matchesFilter(row.signalState, args.signal) &&
         (args.capacity === "all" || row.capacityFlag === args.capacity),
     );
+    if (args.traderSearch.trim()) {
+      rows = rows.filter((row) =>
+        traderMatchesCopyTradeSearch(row, args.traderSearch),
+      );
+    }
     return sortCopyTradeTradersForDisplay(rows, args.sortBy);
   }, [
     mockQuery.data,
@@ -78,25 +87,40 @@ export function useCopyTradeTraders(args: UseCopyTradeTradersArgs) {
     args.confidence,
     args.signal,
     args.capacity,
+    args.traderSearch,
     args.sortBy,
   ]);
 
-  const serverRows = apiQuery.data?.traders ?? [];
+  const serverRowsRaw = apiQuery.data?.traders ?? [];
+  const searchActive = args.traderSearch.trim().length > 0;
+  const serverRows = !searchActive
+    ? serverRowsRaw
+    : serverRowsRaw.filter((row) =>
+        traderMatchesCopyTradeSearch(row, args.traderSearch),
+      );
   const serverRaw = apiQuery.data?.raw;
   const traders = mockEnabled ? mockRows : serverRows;
+  const narrowedOnClient =
+    !mockEnabled && searchActive && serverRowsRaw.length > serverRows.length;
+  const serverMetaTotal =
+    serverRaw?.trader_count ?? serverRaw?.meta?.total ?? serverRowsRaw.length;
   const totalAvailable = mockEnabled
     ? mockRows.length
-    : (serverRaw?.trader_count ?? serverRaw?.meta?.total ?? serverRows.length);
-  const nextCursor = mockEnabled
-    ? undefined
-    : (serverRaw?.pagination?.nextCursor ?? undefined);
-  const hasMore = mockEnabled
-    ? false
-    : Boolean(
-        serverRaw?.pagination?.hasMore ??
-        (serverRaw?.pagination?.nextCursor &&
-          serverRaw.pagination.nextCursor.length > 0),
-      );
+    : narrowedOnClient
+      ? serverRows.length
+      : serverMetaTotal;
+  const nextCursor =
+    mockEnabled || narrowedOnClient
+      ? undefined
+      : (serverRaw?.pagination?.nextCursor ?? undefined);
+  const hasMore =
+    mockEnabled || narrowedOnClient
+      ? false
+      : Boolean(
+          serverRaw?.pagination?.hasMore ??
+          (serverRaw?.pagination?.nextCursor &&
+            serverRaw.pagination.nextCursor.length > 0),
+        );
   const tierRestricted = mockEnabled
     ? false
     : Boolean(serverRaw?.meta?.tier_restricted);

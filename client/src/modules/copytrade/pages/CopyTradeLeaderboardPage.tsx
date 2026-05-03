@@ -15,6 +15,7 @@ import {
 import {
   COPYTRADE_API_PAGE_SIZE,
   COPYTRADE_PER_PAGE_OPTIONS,
+  COPYTRADE_TRADER_SEARCH_DEBOUNCE_MS,
   type CopyTradePerPageOption,
 } from "../lib/copyTradeConstants";
 import { createCopyTradeColumns } from "../lib/createCopyTradeColumns";
@@ -38,6 +39,8 @@ import {
 
 export default function CopyTradeLeaderboardPage() {
   const { user } = useAuth();
+  const [traderQuery, setTraderQuery] = useState("");
+  const [debouncedTraderSearch, setDebouncedTraderSearch] = useState("");
   const [grade, setGrade] = useState<string>("all");
   const [confidence, setConfidence] = useState<string>("all");
   const [signal, setSignal] = useState<string>("all");
@@ -57,13 +60,36 @@ export default function CopyTradeLeaderboardPage() {
     confidence: "all",
     signal: "all",
     capacity: "all",
+    traderSearch: "",
     sortBy: COPYTRADE_DEFAULT_SORT_BY,
     pageSize: COPYTRADE_API_PAGE_SIZE,
   });
 
+  useEffect(() => {
+    if (traderQuery.trim() === "") {
+      setDebouncedTraderSearch("");
+      return;
+    }
+    const id = window.setTimeout(() => {
+      setDebouncedTraderSearch(traderQuery);
+    }, COPYTRADE_TRADER_SEARCH_DEBOUNCE_MS);
+    return () => window.clearTimeout(id);
+  }, [traderQuery]);
+
+  useEffect(() => {
+    setPageIndex(0);
+    setCursorByPage({ 0: null });
+  }, [debouncedTraderSearch]);
+
   const filterState: CopyTradeFilterState = useMemo(
-    () => ({ grade, confidence, signal, capacity }),
-    [grade, confidence, signal, capacity],
+    () => ({
+      grade,
+      confidence,
+      signal,
+      capacity,
+      traderSearch: debouncedTraderSearch,
+    }),
+    [grade, confidence, signal, capacity, debouncedTraderSearch],
   );
 
   const {
@@ -85,6 +111,7 @@ export default function CopyTradeLeaderboardPage() {
       confidence,
       signal,
       capacity,
+      traderSearch: debouncedTraderSearch,
       sortBy,
       pageSize: perPage,
       cursor: currentCursor,
@@ -115,10 +142,11 @@ export default function CopyTradeLeaderboardPage() {
       confidence,
       signal,
       capacity,
+      traderSearch: debouncedTraderSearch,
       sortBy,
       pageSize: perPage,
     };
-  }, [grade, confidence, signal, capacity, sortBy, perPage]);
+  }, [grade, confidence, signal, capacity, debouncedTraderSearch, sortBy, perPage]);
 
   useEffect(() => {
     if (isFetching || isLoading || isError) return;
@@ -162,6 +190,7 @@ export default function CopyTradeLeaderboardPage() {
           if (field === "confidence") setConfidence("all");
           if (field === "signal") setSignal("all");
           if (field === "capacity") setCapacity("all");
+          if (field === "traderSearch") setTraderQuery("");
           setPageIndex(0);
           setCursorByPage({ 0: null });
         },
@@ -171,6 +200,7 @@ export default function CopyTradeLeaderboardPage() {
 
   const clearFilters = useCallback(() => {
     const defaults = defaultCopyTradeFilterState();
+    setTraderQuery(defaults.traderSearch);
     setGrade(defaults.grade);
     setConfidence(defaults.confidence);
     setSignal(defaults.signal);
@@ -246,6 +276,7 @@ export default function CopyTradeLeaderboardPage() {
           confidence: snapshot.confidence,
           signal: snapshot.signal,
           capacity: snapshot.capacity,
+          search: snapshot.traderSearch.trim() || undefined,
           sortBy: snapshot.sortBy,
           pageSize: snapshot.pageSize,
           cursor: probeCursor,
@@ -311,6 +342,8 @@ export default function CopyTradeLeaderboardPage() {
 
         <div className="flex flex-col gap-3">
           <CopyTradeFiltersToolbar
+            traderQuery={traderQuery}
+            onTraderQueryChange={setTraderQuery}
             grade={grade}
             onGradeChange={(value) => {
               setGrade(value);
@@ -358,6 +391,8 @@ export default function CopyTradeLeaderboardPage() {
               <LeaderboardSectionTitle totalCount={totalCount} isLoading={isLoading} />
             </div>
             <CopyTradeMobileActions
+              traderQuery={traderQuery}
+              onTraderQueryChange={setTraderQuery}
               grade={grade}
               onGradeChange={(value) => {
                 setGrade(value);
@@ -416,7 +451,7 @@ export default function CopyTradeLeaderboardPage() {
               }
               pagination={{
                 pageSize: perPage,
-                resetKey: `${grade}|${confidence}|${signal}|${capacity}|${sortBy}|${perPage}`,
+                resetKey: `${grade}|${confidence}|${signal}|${capacity}|${debouncedTraderSearch}|${sortBy}|${perPage}`,
               }}
               tableMinWidthClassName="min-w-[940px] relative [&_th]:px-3 [&_td]:px-3 [&_th:last-child]:pr-8 [&_td:last-child]:pr-8"
               skeletonColumnCount={11}

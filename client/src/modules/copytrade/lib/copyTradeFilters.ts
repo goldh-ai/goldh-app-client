@@ -3,13 +3,15 @@ export type CopyTradeFilterState = {
   confidence: string;
   signal: string;
   capacity: string;
+  traderSearch: string;
 };
 
 export type CopyTradeFilterField =
   | "grade"
   | "confidence"
   | "signal"
-  | "capacity";
+  | "capacity"
+  | "traderSearch";
 
 export function defaultCopyTradeFilterState(): CopyTradeFilterState {
   return {
@@ -17,7 +19,20 @@ export function defaultCopyTradeFilterState(): CopyTradeFilterState {
     confidence: "all",
     signal: "all",
     capacity: "all",
+    traderSearch: "",
   };
+}
+
+export function traderMatchesCopyTradeSearch(
+  row: { traderId: string; handle: string },
+  rawQuery: string,
+): boolean {
+  const q = rawQuery.trim().toLowerCase();
+  if (!q) return true;
+  return (
+    row.traderId.toLowerCase().includes(q) ||
+    row.handle.toLowerCase().includes(q)
+  );
 }
 
 export function collectActiveCopyTradeFilters(
@@ -43,6 +58,10 @@ export function collectActiveCopyTradeFilters(
   }
   if (filters.capacity !== "all") {
     out.push({ field: "capacity", label: "Capacity", value: filters.capacity });
+  }
+  const s = filters.traderSearch.trim();
+  if (s.length > 0) {
+    out.push({ field: "traderSearch", label: "Trader", value: s });
   }
   return out;
 }

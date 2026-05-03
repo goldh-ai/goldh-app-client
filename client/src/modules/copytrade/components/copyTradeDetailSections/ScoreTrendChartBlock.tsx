@@ -1,8 +1,8 @@
 import { useMemo } from "react";
 import {
+  Area,
+  AreaChart,
   CartesianGrid,
-  Line,
-  LineChart,
   ResponsiveContainer,
   Tooltip,
   XAxis,
@@ -16,13 +16,18 @@ import type {
   CopyTradeTraderDetail,
 } from "../../lib/copyTradeDetail";
 import type { CopyTradeScoreTrendPoint } from "../../lib/copyTradeHistoryTransforms";
-import { formatShortDate } from "../../lib/copyTradeHistoryTransforms";
+import {
+  formatCopyTradeChartDate,
+  scoreTrendYDomain,
+} from "../../lib/copyTradeHistoryTransforms";
 
 const CHART_ACCENT = "hsl(var(--primary))";
 const CHART_GRID = "hsl(var(--border))";
 const CHART_TICK = "hsl(var(--muted-foreground))";
 const CHART_POPOVER_BG = "hsl(var(--popover))";
 const CHART_BG = "hsl(var(--background))";
+
+const SCORE_Y_PAD = 5;
 
 type ScoreTrendChartBlockProps = {
   points: CopyTradeScoreTrendPoint[];
@@ -49,7 +54,8 @@ const STABILITY_TONE: Record<
   },
   volatile: {
     dot: "bg-rose-300",
-    surface: "border-rose-600/60 bg-rose-950/90 text-rose-50 shadow-sm dark:border-rose-500/45",
+    surface:
+      "border-rose-600/60 bg-rose-950/90 text-rose-50 shadow-sm dark:border-rose-500/45",
     label: "Volatile",
   },
 };
@@ -60,12 +66,10 @@ export function ScoreTrendChartBlock({
   hasError,
   stability,
 }: ScoreTrendChartBlockProps) {
-  const tickDates = useMemo(() => {
-    if (points.length === 0) return [];
-    return points
-      .filter((_, i) => i % 5 === 0 || i === points.length - 1)
-      .map((p) => p.date);
-  }, [points]);
+  const yDomain = useMemo(
+    () => scoreTrendYDomain(points.map((p) => p.score), SCORE_Y_PAD),
+    [points],
+  );
 
   const stats = useMemo(() => {
     if (points.length < 2) return null;
@@ -74,26 +78,47 @@ export function ScoreTrendChartBlock({
     return { start, end, delta: end - start };
   }, [points]);
 
+  const chartShell =
+    "relative h-52 w-full shrink-0 rounded-xl bg-muted/15 p-2 ring-1 ring-inset ring-border/35 sm:h-60";
+
   if (isLoading && points.length < 2) {
-    return <Skeleton className="h-52 w-full rounded-xl bg-muted/40 sm:h-60" />;
+    return (
+      <div className="flex min-h-0 w-full flex-1 flex-col">
+        <div className="min-h-0 flex-1" aria-hidden />
+        <Skeleton className={cn(chartShell, "animate-pulse bg-muted/40")} />
+      </div>
+    );
   }
 
   if (hasError) {
     return (
-      <div className="flex h-52 items-center justify-center rounded-xl border border-amber-500/30 bg-amber-500/5 px-3 sm:h-60">
-        <p className="text-center text-xs text-amber-200">
-          Score history temporarily unavailable.
-        </p>
+      <div className="flex min-h-0 w-full flex-1 flex-col">
+        <div className="min-h-0 flex-1" aria-hidden />
+        <div
+          className={cn(
+            chartShell,
+            "flex items-center justify-center border border-amber-500/30 bg-amber-500/5 px-3",
+          )}
+        >
+          <p className="text-center text-xs text-amber-200">
+            Score history temporarily unavailable.
+          </p>
+        </div>
       </div>
     );
   }
 
   if (points.length < 2) {
     return (
-      <div className="flex h-52 items-center justify-center rounded-xl border border-border/60 bg-muted/10 sm:h-60">
-        <p className="text-xs text-muted-foreground">
-          Not enough history to plot score trend.
-        </p>
+      <div className="flex min-h-0 w-full flex-1 flex-col">
+        <div className="min-h-0 flex-1" aria-hidden />
+        <div
+          className={cn(chartShell, "flex items-center justify-center border border-border/60 bg-muted/10")}
+        >
+          <p className="text-xs text-muted-foreground">
+            Not enough history to plot score trend.
+          </p>
+        </div>
       </div>
     );
   }
@@ -107,15 +132,15 @@ export function ScoreTrendChartBlock({
         ? "text-emerald-300"
         : stats.delta < 0
           ? "text-rose-300"
-          : "text-foreground";
+          : "text-muted-foreground";
   const deltaLabel =
     stats == null
       ? "—"
       : `${stats.delta > 0 ? "+" : ""}${stats.delta.toFixed(1)} pts`;
 
   return (
-    <div className="space-y-2.5">
-      <div className="flex flex-wrap items-center justify-between gap-2">
+    <div className="flex min-h-0 w-full flex-1 flex-col">
+      <div className="flex w-full shrink-0 flex-wrap items-center justify-between gap-x-3 gap-y-1">
         {stabilityTone ? (
           <span
             className={cn(
@@ -132,36 +157,39 @@ export function ScoreTrendChartBlock({
           </span>
         )}
         <span
-          className={cn("font-mono text-xs font-bold tabular-nums", deltaTone)}
+          className={cn(
+            "ml-auto shrink-0 font-mono text-xs font-bold tabular-nums",
+            deltaTone,
+          )}
           title="Change from start to end of selected window"
         >
           Δ {deltaLabel}
         </span>
       </div>
 
-      <div className="h-52 w-full rounded-xl bg-muted/15 p-2 ring-1 ring-inset ring-border/35 sm:h-60">
+      <div className="min-h-0 flex-1" aria-hidden />
+
+      <div className={chartShell}>
         <ResponsiveContainer width="100%" height="100%">
-          <LineChart
+          <AreaChart
             data={points}
-            margin={{ top: 16, right: 12, left: 2, bottom: 4 }}
+            margin={{ top: 16, right: 12, left: 2, bottom: 8 }}
           >
+            <defs>
+              <linearGradient id="copytradeScoreTrendFill" x1="0" y1="0" x2="0" y2="1">
+                <stop offset="0%" stopColor={CHART_ACCENT} stopOpacity={0.38} />
+                <stop offset="100%" stopColor={CHART_ACCENT} stopOpacity={0.04} />
+              </linearGradient>
+            </defs>
             <CartesianGrid
               strokeDasharray="3 3"
               stroke={CHART_GRID}
               vertical={false}
             />
-            <XAxis
-              dataKey="date"
-              ticks={tickDates}
-              tickFormatter={(v) => formatShortDate(String(v))}
-              tick={{ fill: CHART_TICK, fontSize: 10 }}
-              axisLine={{ stroke: CHART_GRID }}
-              tickLine={false}
-              padding={{ left: 6, right: 6 }}
-            />
+            <XAxis dataKey="date" hide />
             <YAxis
-              domain={[0, 100]}
-              width={32}
+              domain={yDomain}
+              width={36}
               tick={{ fill: CHART_TICK, fontSize: 10 }}
               axisLine={false}
               tickLine={false}
@@ -173,14 +201,15 @@ export function ScoreTrendChartBlock({
                 borderRadius: "8px",
                 fontSize: "11px",
               }}
-              labelFormatter={(l) => formatShortDate(String(l))}
+              labelFormatter={(l) => formatCopyTradeChartDate(String(l))}
               formatter={(v: number) => [fmtCopyTradeScore(v), "Score"]}
             />
-            <Line
+            <Area
               type="monotone"
               dataKey="score"
               stroke={CHART_ACCENT}
-              strokeWidth={2.5}
+              strokeWidth={2}
+              fill="url(#copytradeScoreTrendFill)"
               dot={false}
               activeDot={{
                 r: 5,
@@ -190,7 +219,7 @@ export function ScoreTrendChartBlock({
               }}
               isAnimationActive={false}
             />
-          </LineChart>
+          </AreaChart>
         </ResponsiveContainer>
       </div>
     </div>

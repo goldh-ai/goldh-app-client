@@ -1,3 +1,4 @@
+import { InstitutionalFilterSearchField } from "@/components/shared/InstitutionalFilterSearchField";
 import { InstitutionalMobileFilterSheet } from "@/components/shared/InstitutionalMobileFilterSheet";
 import {
   INSTITUTIONAL_FILTER_BAR,
@@ -16,6 +17,8 @@ import {
 import { CopyTradeFilterFieldSelect } from "./CopyTradeFilterFieldSelect";
 
 export type CopyTradeFiltersToolbarProps = {
+  traderQuery: string;
+  onTraderQueryChange: (value: string) => void;
   grade: string;
   onGradeChange: (value: string) => void;
   confidence: string;
@@ -33,6 +36,8 @@ export type CopyTradeMobileActionsProps = CopyTradeFiltersToolbarProps & {
 };
 
 export function CopyTradeFiltersToolbar({
+  traderQuery,
+  onTraderQueryChange,
   grade,
   onGradeChange,
   confidence,
@@ -46,7 +51,14 @@ export function CopyTradeFiltersToolbar({
 }: CopyTradeFiltersToolbarProps) {
   return (
     <div className={cn(INSTITUTIONAL_FILTER_BAR, "hidden px-0 md:block")}>
-      <div className="md:grid md:grid-cols-[minmax(7.25rem,9.5rem)_minmax(7.25rem,9.5rem)_minmax(7.25rem,9.5rem)_minmax(7.25rem,9.5rem)_auto] md:items-end md:gap-x-3 md:gap-y-2">
+      <div className="md:grid md:grid-cols-[minmax(11rem,1fr)_minmax(7.25rem,9.5rem)_minmax(7.25rem,9.5rem)_minmax(7.25rem,9.5rem)_minmax(7.25rem,9.5rem)_auto] md:items-end md:gap-x-3 md:gap-y-2">
+        <InstitutionalFilterSearchField
+          id="copytrade-trader-filter"
+          label="Trader"
+          value={traderQuery}
+          onChange={onTraderQueryChange}
+          placeholder="Handle or trader ID…"
+        />
         <div className="min-w-0">
           <label htmlFor="copytrade-grade-desktop" className={institutionalFieldLabelClass}>
             Grade
@@ -109,6 +121,8 @@ export function CopyTradeFiltersToolbar({
 }
 
 export function CopyTradeMobileActions({
+  traderQuery,
+  onTraderQueryChange,
   grade,
   onGradeChange,
   confidence,
@@ -124,6 +138,15 @@ export function CopyTradeMobileActions({
   return (
     <div className="flex items-center gap-2 md:hidden">
       <InstitutionalMobileFilterSheet onClear={onClearAllFilters}>
+        <InstitutionalFilterSearchField
+          className="space-y-3"
+          id="copytrade-trader-sheet"
+          label="Trader"
+          value={traderQuery}
+          onChange={onTraderQueryChange}
+          placeholder="Handle or trader ID…"
+          comfortable
+        />
         <div className="space-y-3">
           <label htmlFor="copytrade-grade-sheet" className={institutionalFieldLabelClass}>
             Grade

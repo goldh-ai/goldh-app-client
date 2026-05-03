@@ -146,6 +146,7 @@ export function createCopyTradeColumns(
         <button
           type="button"
           onClick={() => onSelectTrader?.(row.original.traderId)}
+          title={`${row.original.handle} · ${row.original.traderId}`}
           className={cn(
             "flex min-h-10 w-full min-w-[7.25rem] flex-col items-start justify-center rounded-md px-1 py-1 text-left outline-none transition focus-visible:ring-1 focus-visible:ring-primary/60",
             selectedTraderId === row.original.traderId &&

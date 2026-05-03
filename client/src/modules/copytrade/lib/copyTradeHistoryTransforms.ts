@@ -41,9 +41,7 @@ export function historyRecordsToScoreTrend(
   }));
 }
 
-/**
- * Builds an equity curve from cumulative ROI % at each snapshot (notional base $1,000).
- */
+/** Per snapshot: roiPct from roi_total_pct; equity/profit from optional notional base. */
 export function historyRecordsToPerformancePoints(
   records: CopyTradeHistoryRecord[],
   startEquityUsd = 1000,
@@ -64,8 +62,44 @@ export function historyRecordsToPerformancePoints(
   });
 }
 
-export function formatShortDate(isoDate: string): string {
-  const [y, m, d] = isoDate.split("-");
-  if (!m || !d) return isoDate;
-  return `${m}/${d}`;
+export function formatCopyTradeChartDate(isoDate: string): string {
+  const trimmed = isoDate.trim();
+  const day = trimmed.slice(0, 10);
+  if (/^\d{4}-\d{2}-\d{2}$/.test(day)) return day;
+  const ms = Date.parse(trimmed);
+  if (!Number.isNaN(ms)) return new Date(ms).toISOString().slice(0, 10);
+  return trimmed;
+}
+
+/** Score chart Y domain: min/max ± pad, clamped 0–100. */
+export function scoreTrendYDomain(
+  scores: readonly number[],
+  pad = 5,
+): [number, number] {
+  if (scores.length === 0) return [0, 100];
+  let lo = Math.min(...scores);
+  let hi = Math.max(...scores);
+  if (lo === hi) {
+    lo -= pad;
+    hi += pad;
+  }
+  return [
+    Math.max(0, Math.floor(lo - pad)),
+    Math.min(100, Math.ceil(hi + pad)),
+  ];
+}
+
+/** ROI % chart Y domain: min/max ± pad (percentage points); negatives allowed. */
+export function cumulativeRoiTrendYDomain(
+  roiPcts: readonly number[],
+  pad = 5,
+): [number, number] {
+  if (roiPcts.length === 0) return [-pad, pad];
+  let lo = Math.min(...roiPcts);
+  let hi = Math.max(...roiPcts);
+  if (lo === hi) {
+    lo -= pad;
+    hi += pad;
+  }
+  return [lo - pad, hi + pad];
 }

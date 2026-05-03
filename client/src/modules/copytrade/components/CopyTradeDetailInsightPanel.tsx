@@ -5,22 +5,30 @@ export type CopyTradeDetailColumnHeaderProps = {
   title: string;
   subtitle?: string;
   right?: ReactNode;
+  /** With `right`, keeps controls on the same row as the title (narrow widths). */
+  pinToggle?: boolean;
 };
 
 export function CopyTradeDetailColumnHeader({
   title,
   subtitle,
   right,
+  pinToggle,
 }: CopyTradeDetailColumnHeaderProps) {
   return (
-    <div className="flex flex-wrap items-start justify-between gap-2">
-      <div className="min-w-0">
+    <div
+      className={cn(
+        "flex items-start justify-between gap-2",
+        pinToggle && right ? "flex-nowrap" : "flex-wrap",
+      )}
+    >
+      <div className={cn("min-w-0", pinToggle && right && "min-w-0 flex-1 pr-2")}>
         <h4 className="text-xs font-black uppercase tracking-wider text-primary/95">{title}</h4>
         {subtitle ? (
           <p className="mt-1 text-xs font-medium leading-snug text-muted-foreground">{subtitle}</p>
         ) : null}
       </div>
-      {right ? <div className="shrink-0">{right}</div> : null}
+      {right ? <div className="shrink-0 pt-0.5">{right}</div> : null}
     </div>
   );
 }

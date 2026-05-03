@@ -125,53 +125,60 @@ export function CopyTradeDetailSections({
   return (
     <div className="space-y-4">
       <CopyTradeDetailInsightPanel
+        balanceColumnHeights
         eyebrow="Trajectory"
         left={
-          <>
-            <CopyTradeDetailColumnHeader
-              title="Is the score consistent?"
-              subtitle="Score trend over the selected window"
-              right={
-                <RangeToggle
-                  value={scoreRange}
-                  onChange={setScoreRange}
-                  options={[30, 90] as const}
-                  format={(d) => `${d}d`}
-                />
-              }
-            />
-            <div className="mt-3">
+          <InsightColumn
+            header={
+              <CopyTradeDetailColumnHeader
+                title="Is the score consistent?"
+                subtitle="Score trend over the selected window"
+                pinToggle
+                right={
+                  <RangeToggle
+                    value={scoreRange}
+                    onChange={setScoreRange}
+                    options={[30, 90] as const}
+                    format={(d) => `${d}d`}
+                  />
+                }
+              />
+            }
+            body={
               <ScoreTrendChartBlock
                 points={scorePoints}
                 isLoading={isHistoryFetching}
                 hasError={scoreErr}
                 stability={detail.scoreStability}
               />
-            </div>
-          </>
+            }
+          />
         }
         right={
-          <>
-            <CopyTradeDetailColumnHeader
-              title="How have they performed?"
-              subtitle="Equity curve from cumulative ROI"
-              right={
-                <RangeToggle
-                  value={perfRange}
-                  onChange={setPerfRange}
-                  options={["30d", "90d", "all"] as const}
-                  format={(k) => (k === "all" ? "All" : k.toUpperCase())}
-                />
-              }
-            />
-            <div className="mt-3">
+          <InsightColumn
+            header={
+              <CopyTradeDetailColumnHeader
+                title="How have they performed?"
+                subtitle="Uses roi_total_pct (cumulative ROI %) each snapshot — not broker equity."
+                pinToggle
+                right={
+                  <RangeToggle
+                    value={perfRange}
+                    onChange={setPerfRange}
+                    options={["30d", "90d", "all"] as const}
+                    format={(k) => (k === "all" ? "All" : k.toUpperCase())}
+                  />
+                }
+              />
+            }
+            body={
               <PerformanceChartBlock
                 points={perfPoints}
                 isLoading={isHistoryFetching}
                 hasError={perfErr}
               />
-            </div>
-          </>
+            }
+          />
         }
       />
 
