@@ -6,7 +6,7 @@ import {
   institutionalTableSortGlyphMutedClass,
   institutionalTableSortHeaderButtonClass,
   institutionalTableCellInnerCenterClass,
-  institutionalTableCellInnerLeftClass,
+  institutionalTableCellInnerRightClass,
   institutionalTableCellMonoClass,
   institutionalTableEntityTextClass,
   institutionalTableCellTextClass,
@@ -25,7 +25,16 @@ import {
 } from "./copyTradeBadges";
 import { InstitutionalScoreCell } from "@/components/shared/InstitutionalScoreCell";
 import { CopyTradeRecommendedActionBadge } from "../components/CopyTradeRecommendedActionBadge";
-import { fmtCopyTradeMomentum } from "./copyTradeFormat";
+import {
+  copyTradeLastSeenTextClass,
+  copyTradeMaxDrawdownPctTextClass,
+  copyTradeMonthsActiveTextClass,
+  copyTradeSignedPctTextClass,
+  copyTradeTotalTradesTextClass,
+  fmtCopyTradeMaxDrawdownPct,
+  fmtCopyTradeRoiPct,
+  fmtCopyTradeUpdated,
+} from "./copyTradeFormat";
 
 const columnHelper = createColumnHelper<CopyTradeTrader>();
 
@@ -182,6 +191,124 @@ export function createCopyTradeColumns(
       ),
       meta: { arbHeadClass: "min-w-[4.75rem]", arbCellClass: "min-w-[4.75rem]" },
     }),
+    columnHelper.accessor("roiTotalPct", {
+      id: "roiTotalPct",
+      header: ({ column }) => (
+        <ServerSortHeader
+          label="ROI"
+          column={column}
+          onSortByChange={onSortByChange}
+          sortBy={sortBy}
+          sortAsc={COPYTRADE_SORT_BY.ROI_ASC}
+          sortDesc={COPYTRADE_SORT_BY.ROI_DESC}
+          columnId="roiTotalPct"
+          align="right"
+        />
+      ),
+      enableSorting: true,
+      cell: (info) => {
+        const v = info.getValue();
+        return (
+          <div className={institutionalTableCellInnerRightClass}>
+            <p
+              className={cn(
+                institutionalTableCellMonoClass,
+                copyTradeSignedPctTextClass(v),
+                "text-right",
+              )}
+            >
+              {fmtCopyTradeRoiPct(v)}
+            </p>
+          </div>
+        );
+      },
+      meta: { arbHeadClass: "min-w-[4.5rem]", arbCellClass: "min-w-[4.5rem]" },
+    }),
+    columnHelper.accessor("maxDrawdownPct", {
+      id: "maxDrawdownPct",
+      header: ({ column }) => (
+        <ServerSortHeader
+          label="Max DD"
+          column={column}
+          onSortByChange={onSortByChange}
+          sortBy={sortBy}
+          sortAsc={COPYTRADE_SORT_BY.MAX_DRAWDOWN_ASC}
+          sortDesc={COPYTRADE_SORT_BY.MAX_DRAWDOWN_DESC}
+          columnId="maxDrawdownPct"
+          align="right"
+        />
+      ),
+      enableSorting: true,
+      cell: (info) => {
+        const v = info.getValue();
+        return (
+          <div className={institutionalTableCellInnerRightClass}>
+            <p
+              className={cn(
+                institutionalTableCellMonoClass,
+                copyTradeMaxDrawdownPctTextClass(v),
+                "text-right",
+              )}
+            >
+              {fmtCopyTradeMaxDrawdownPct(v)}
+            </p>
+          </div>
+        );
+      },
+      meta: { arbHeadClass: "min-w-[4.75rem]", arbCellClass: "min-w-[4.75rem]" },
+    }),
+    columnHelper.accessor("monthsActive", {
+      id: "monthsActive",
+      header: ({ column }) => (
+        <ServerSortHeader
+          label="Months"
+          column={column}
+          onSortByChange={onSortByChange}
+          sortBy={sortBy}
+          sortAsc={COPYTRADE_SORT_BY.MONTHS_ACTIVE_ASC}
+          sortDesc={COPYTRADE_SORT_BY.MONTHS_ACTIVE_DESC}
+          columnId="monthsActive"
+          align="center"
+        />
+      ),
+      enableSorting: true,
+      cell: (info) => {
+        const v = info.getValue();
+        return (
+          <div className={institutionalTableCellInnerCenterClass}>
+            <p
+              className={cn(
+                institutionalTableCellMonoClass,
+                copyTradeMonthsActiveTextClass(v),
+              )}
+            >
+              {v === null ? "—" : String(v)}
+            </p>
+          </div>
+        );
+      },
+      meta: { arbHeadClass: "min-w-[4rem]", arbCellClass: "min-w-[4rem]" },
+    }),
+    columnHelper.accessor("totalTrades", {
+      header: () => <StaticHeader label="Trades" align="center" />,
+      enableSorting: false,
+      cell: (info) => {
+        const v = info.getValue();
+        return (
+          <div className={institutionalTableCellInnerCenterClass}>
+            <p
+              className={cn(
+                institutionalTableCellMonoClass,
+                copyTradeTotalTradesTextClass(v),
+              )}
+            >
+              {v === null ? "—" : String(v)}
+            </p>
+          </div>
+        );
+      },
+      meta: { arbHeadClass: "min-w-[4rem]", arbCellClass: "min-w-[4rem]" },
+    }),
     columnHelper.accessor("score", {
       header: ({ column }) => (
         <ServerSortHeader
@@ -258,53 +385,6 @@ export function createCopyTradeColumns(
         arbCellClass: "min-w-[6rem]",
       },
     }),
-    columnHelper.accessor("rankChange7d", {
-      header: () => <StaticHeader label="Rank ↑ 7d" align="center" />,
-      enableSorting: false,
-      cell: (info) => {
-        const value = info.getValue();
-        if (value === null) {
-          return (
-            <div className={institutionalTableCellInnerCenterClass}>
-              <p
-                className={cn(institutionalTableCellTextClass, "text-sm")}
-                title="No 7-day rank change info available"
-              >
-                —
-              </p>
-            </div>
-          );
-        }
-        const tone = value > 0 ? "text-chart-4" : value < 0 ? "text-destructive" : "text-muted-foreground";
-        return (
-          <div className={institutionalTableCellInnerCenterClass}>
-            <p className={cn(institutionalTableCellMonoClass, tone)}>{value > 0 ? `+${value}` : value}</p>
-          </div>
-        );
-      },
-      meta: { arbHeadClass: "min-w-[4.75rem]", arbCellClass: "min-w-[4.75rem]" },
-    }),
-    columnHelper.accessor("momentum", {
-      header: ({ column }) => (
-        <ServerSortHeader
-          label="Momentum"
-          column={column}
-          onSortByChange={onSortByChange}
-          sortBy={sortBy}
-          sortAsc={COPYTRADE_SORT_BY.MOMENTUM_ASC}
-          sortDesc={COPYTRADE_SORT_BY.MOMENTUM_DESC}
-          columnId="momentum"
-          align="center"
-        />
-      ),
-      enableSorting: true,
-      cell: (info) => (
-        <div className={institutionalTableCellInnerCenterClass}>
-          <p className={institutionalTableCellMonoClass}>{fmtCopyTradeMomentum(info.getValue())}</p>
-        </div>
-      ),
-      meta: { arbHeadClass: "min-w-[4.75rem]", arbCellClass: "min-w-[4.75rem]" },
-    }),
     columnHelper.accessor("profileTag", {
       header: () => <StaticHeader label="Profile" align="center" />,
       enableSorting: false,
@@ -332,6 +412,40 @@ export function createCopyTradeColumns(
         </div>
       ),
       meta: { arbHeadClass: "min-w-[5.25rem]", arbCellClass: "min-w-[5.25rem]" },
+    }),
+    columnHelper.accessor("lastSeenAt", {
+      id: "lastSeenAt",
+      header: ({ column }) => (
+        <ServerSortHeader
+          label="Updated"
+          column={column}
+          onSortByChange={onSortByChange}
+          sortBy={sortBy}
+          sortAsc={COPYTRADE_SORT_BY.LAST_SEEN_ASC}
+          sortDesc={COPYTRADE_SORT_BY.LAST_SEEN_DESC}
+          columnId="lastSeenAt"
+          align="right"
+        />
+      ),
+      enableSorting: true,
+      cell: (info) => {
+        const iso = info.getValue();
+        return (
+          <div className={institutionalTableCellInnerRightClass}>
+            <p
+              className={cn(
+                institutionalTableCellMonoClass,
+                copyTradeLastSeenTextClass(iso),
+                "text-right text-xs",
+              )}
+              title={iso}
+            >
+              {fmtCopyTradeUpdated(iso)}
+            </p>
+          </div>
+        );
+      },
+      meta: { arbHeadClass: "min-w-[6.25rem]", arbCellClass: "min-w-[6.25rem]" },
     }),
   ] as ColumnDef<CopyTradeTrader>[];
 }

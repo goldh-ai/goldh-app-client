@@ -60,7 +60,6 @@ export type CopyTradeTraderDetail = Omit<
   performance30?: CopyTradePerformancePoint[];
   performance90?: CopyTradePerformancePoint[];
   performance365?: CopyTradePerformancePoint[];
-  maxDrawdownPct?: number | null;
   winRatePct?: number | null;
   strategyLabel?: string | null;
   totalTradesProfile?: number | null;
@@ -354,22 +353,52 @@ export function buildCopyTradeDetailFromPayload(
       ? (riskRaw as CopyTradeRiskLevel)
       : null;
 
-  const maxDrawdownPct =
+  const roiTotalPctMerged =
+    readNumber(rawMetrics, "roi_total_pct") ??
+    readNumber(source, "roi_total_pct") ??
+    baseTrader?.roiTotalPct ??
+    undefined;
+  const roiTotalPct =
+    roiTotalPctMerged !== undefined && roiTotalPctMerged !== null
+      ? roiTotalPctMerged
+      : null;
+
+  const maxDrawdownPctMerged =
     readNumber(rawMetrics, "max_drawdown_pct") ??
     readNumber(source, "max_drawdown_pct") ??
-    null;
+    baseTrader?.maxDrawdownPct ??
+    undefined;
+  const maxDrawdownPct =
+    maxDrawdownPctMerged !== undefined && maxDrawdownPctMerged !== null
+      ? maxDrawdownPctMerged
+      : null;
+
+  const monthsMerged =
+    readNumber(rawMetrics, "months_active") ??
+    readNumber(source, "months_active") ??
+    baseTrader?.monthsActive ??
+    undefined;
+  const monthsActive =
+    monthsMerged !== undefined && monthsMerged !== null
+      ? Math.trunc(monthsMerged)
+      : null;
+
+  const tradesMerged =
+    readNumber(rawMetrics, "total_trades") ??
+    readNumber(source, "total_trades") ??
+    baseTrader?.totalTrades ??
+    undefined;
+  const totalTradesLeaderboard =
+    tradesMerged !== undefined && tradesMerged !== null
+      ? Math.trunc(tradesMerged)
+      : null;
+
   const winRatePct =
     normalizeWinRateToPct(rawMetrics.win_rate_pct) ??
     normalizeWinRateToPct(rawMetrics.win_rate) ??
     null;
-  const totalTradesProfile =
-    readNumber(rawMetrics, "total_trades") ??
-    readNumber(source, "total_trades") ??
-    null;
-  const monthsActiveProfile =
-    readNumber(rawMetrics, "months_active") ??
-    readNumber(source, "months_active") ??
-    null;
+  const totalTradesProfile = totalTradesLeaderboard;
+  const monthsActiveProfile = monthsActive;
   const avgTradesPerMonth =
     readNumber(rawMetrics, "avg_trades_per_month") ?? null;
   const profileTag =
@@ -455,6 +484,10 @@ export function buildCopyTradeDetailFromPayload(
     confidenceBand,
     score,
     momentum,
+    roiTotalPct,
+    maxDrawdownPct,
+    monthsActive,
+    totalTrades: totalTradesLeaderboard,
     profileTag,
     capacityFlag,
     lifecycleState,
@@ -468,7 +501,6 @@ export function buildCopyTradeDetailFromPayload(
     flags,
     history30d,
     history90d,
-    maxDrawdownPct,
     winRatePct,
     strategyLabel: profileTag,
     totalTradesProfile,

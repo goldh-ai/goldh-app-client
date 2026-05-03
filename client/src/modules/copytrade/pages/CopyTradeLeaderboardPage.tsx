@@ -446,15 +446,16 @@ export default function CopyTradeLeaderboardPage() {
               }}
               getRowClassName={(row) =>
                 row.traderId === selectedTraderId
-                  ? "bg-primary/10 ring-1 ring-inset ring-primary/55"
+                  ? // `border-b` on `<td>` sits on the row edge and hides an inset ring bottom; drop it so the frame reads on all sides.
+                  "relative z-[1] bg-primary/10 ring-1 ring-inset ring-primary/60 [&>td]:border-b-transparent"
                   : undefined
               }
               pagination={{
                 pageSize: perPage,
                 resetKey: `${grade}|${confidence}|${signal}|${capacity}|${debouncedTraderSearch}|${sortBy}|${perPage}`,
               }}
-              tableMinWidthClassName="min-w-[940px] relative [&_th]:px-3 [&_td]:px-3 [&_th:last-child]:pr-8 [&_td:last-child]:pr-8"
-              skeletonColumnCount={11}
+              tableMinWidthClassName="min-w-[1320px] relative [&_th]:px-3 [&_td]:px-3 [&_th:last-child]:pr-8 [&_td:last-child]:pr-8"
+              skeletonColumnCount={14}
               emptyTitle="No traders found"
               emptyDescription="Refine filters or clear to show all leaderboard rows."
               onClearFilters={clearFilters}

@@ -9,6 +9,7 @@ import type {
   CopyTradeRiskLevel,
   CopyTradeTraderDetail,
 } from "../../lib/copyTradeDetail";
+import { copyTradeMaxDrawdownPctTextClass } from "../../lib/copyTradeFormat";
 
 type RiskProfileBlockProps = {
   detail: CopyTradeTraderDetail;
@@ -102,11 +103,7 @@ export function RiskProfileBlock({ detail, fillHeight = false }: RiskProfileBloc
   const hasRiskTier =
     risk === "Low" || risk === "Medium" || risk === "High";
   const ddTone =
-    dd != null && Math.abs(dd) > 20
-      ? "text-rose-400"
-      : dd != null && Math.abs(dd) > 12
-        ? "text-amber-300"
-        : "text-foreground";
+    dd == null ? "text-muted-foreground" : copyTradeMaxDrawdownPctTextClass(dd);
   const wrTone =
     wr != null && wr >= 60
       ? "text-emerald-400"

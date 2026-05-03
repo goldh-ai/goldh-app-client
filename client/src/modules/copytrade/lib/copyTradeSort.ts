@@ -5,8 +5,12 @@ export const COPYTRADE_SORT_BY = {
   RANK_ASC: "rank_asc",
   SCORE_DESC: "score_desc",
   SCORE_ASC: "score_asc",
-  MOMENTUM_DESC: "momentum_desc",
-  MOMENTUM_ASC: "momentum_asc",
+  ROI_DESC: "roi_desc",
+  ROI_ASC: "roi_asc",
+  MAX_DRAWDOWN_DESC: "max_drawdown_desc",
+  MAX_DRAWDOWN_ASC: "max_drawdown_asc",
+  MONTHS_ACTIVE_DESC: "months_active_desc",
+  MONTHS_ACTIVE_ASC: "months_active_asc",
   LAST_SEEN_DESC: "last_seen_desc",
   LAST_SEEN_ASC: "last_seen_asc",
 } as const satisfies Record<string, CopyTradeSortByApi>;
@@ -17,7 +21,9 @@ export const COPYTRADE_DEFAULT_SORT_BY: CopyTradeSortByApi =
 export const COPYTRADE_SORTABLE_COLUMN_ID = {
   RANK: "computedRank",
   SCORE: "score",
-  MOMENTUM: "momentum",
+  ROI: "roiTotalPct",
+  MAX_DRAWDOWN: "maxDrawdownPct",
+  MONTHS_ACTIVE: "monthsActive",
   LAST_SEEN: "lastSeenAt",
 } as const;
 
@@ -29,8 +35,16 @@ const SORT_BY_TO_COLUMN_ID = {
   [COPYTRADE_SORT_BY.RANK_ASC]: COPYTRADE_SORTABLE_COLUMN_ID.RANK,
   [COPYTRADE_SORT_BY.SCORE_DESC]: COPYTRADE_SORTABLE_COLUMN_ID.SCORE,
   [COPYTRADE_SORT_BY.SCORE_ASC]: COPYTRADE_SORTABLE_COLUMN_ID.SCORE,
-  [COPYTRADE_SORT_BY.MOMENTUM_DESC]: COPYTRADE_SORTABLE_COLUMN_ID.MOMENTUM,
-  [COPYTRADE_SORT_BY.MOMENTUM_ASC]: COPYTRADE_SORTABLE_COLUMN_ID.MOMENTUM,
+  [COPYTRADE_SORT_BY.ROI_DESC]: COPYTRADE_SORTABLE_COLUMN_ID.ROI,
+  [COPYTRADE_SORT_BY.ROI_ASC]: COPYTRADE_SORTABLE_COLUMN_ID.ROI,
+  [COPYTRADE_SORT_BY.MAX_DRAWDOWN_DESC]:
+    COPYTRADE_SORTABLE_COLUMN_ID.MAX_DRAWDOWN,
+  [COPYTRADE_SORT_BY.MAX_DRAWDOWN_ASC]:
+    COPYTRADE_SORTABLE_COLUMN_ID.MAX_DRAWDOWN,
+  [COPYTRADE_SORT_BY.MONTHS_ACTIVE_DESC]:
+    COPYTRADE_SORTABLE_COLUMN_ID.MONTHS_ACTIVE,
+  [COPYTRADE_SORT_BY.MONTHS_ACTIVE_ASC]:
+    COPYTRADE_SORTABLE_COLUMN_ID.MONTHS_ACTIVE,
   [COPYTRADE_SORT_BY.LAST_SEEN_DESC]: COPYTRADE_SORTABLE_COLUMN_ID.LAST_SEEN,
   [COPYTRADE_SORT_BY.LAST_SEEN_ASC]: COPYTRADE_SORTABLE_COLUMN_ID.LAST_SEEN,
 } as const satisfies Record<CopyTradeSortByApi, CopyTradeSortableColumnId>;
@@ -51,8 +65,12 @@ export function nextCopyTradeSortForColumn(
       return COPYTRADE_SORT_BY.RANK_ASC;
     if (columnId === COPYTRADE_SORTABLE_COLUMN_ID.SCORE)
       return COPYTRADE_SORT_BY.SCORE_DESC;
-    if (columnId === COPYTRADE_SORTABLE_COLUMN_ID.MOMENTUM)
-      return COPYTRADE_SORT_BY.MOMENTUM_DESC;
+    if (columnId === COPYTRADE_SORTABLE_COLUMN_ID.ROI)
+      return COPYTRADE_SORT_BY.ROI_DESC;
+    if (columnId === COPYTRADE_SORTABLE_COLUMN_ID.MAX_DRAWDOWN)
+      return COPYTRADE_SORT_BY.MAX_DRAWDOWN_ASC;
+    if (columnId === COPYTRADE_SORTABLE_COLUMN_ID.MONTHS_ACTIVE)
+      return COPYTRADE_SORT_BY.MONTHS_ACTIVE_DESC;
     return COPYTRADE_SORT_BY.LAST_SEEN_DESC;
   }
 
@@ -65,15 +83,37 @@ export function nextCopyTradeSortForColumn(
       return COPYTRADE_SORT_BY.SCORE_ASC;
     case COPYTRADE_SORT_BY.SCORE_ASC:
       return COPYTRADE_SORT_BY.SCORE_DESC;
-    case COPYTRADE_SORT_BY.MOMENTUM_DESC:
-      return COPYTRADE_SORT_BY.MOMENTUM_ASC;
-    case COPYTRADE_SORT_BY.MOMENTUM_ASC:
-      return COPYTRADE_SORT_BY.MOMENTUM_DESC;
+    case COPYTRADE_SORT_BY.ROI_DESC:
+      return COPYTRADE_SORT_BY.ROI_ASC;
+    case COPYTRADE_SORT_BY.ROI_ASC:
+      return COPYTRADE_SORT_BY.ROI_DESC;
+    case COPYTRADE_SORT_BY.MAX_DRAWDOWN_DESC:
+      return COPYTRADE_SORT_BY.MAX_DRAWDOWN_ASC;
+    case COPYTRADE_SORT_BY.MAX_DRAWDOWN_ASC:
+      return COPYTRADE_SORT_BY.MAX_DRAWDOWN_DESC;
+    case COPYTRADE_SORT_BY.MONTHS_ACTIVE_DESC:
+      return COPYTRADE_SORT_BY.MONTHS_ACTIVE_ASC;
+    case COPYTRADE_SORT_BY.MONTHS_ACTIVE_ASC:
+      return COPYTRADE_SORT_BY.MONTHS_ACTIVE_DESC;
     case COPYTRADE_SORT_BY.LAST_SEEN_DESC:
       return COPYTRADE_SORT_BY.LAST_SEEN_ASC;
     case COPYTRADE_SORT_BY.LAST_SEEN_ASC:
       return COPYTRADE_SORT_BY.LAST_SEEN_DESC;
   }
+}
+
+function cmpNullableNumber(
+  a: number | null,
+  b: number | null,
+  desc: boolean,
+): number {
+  const aMissing = a === null || !Number.isFinite(a);
+  const bMissing = b === null || !Number.isFinite(b);
+  if (aMissing && bMissing) return 0;
+  if (aMissing) return 1;
+  if (bMissing) return -1;
+  const diff = desc ? b - a : a - b;
+  return diff;
 }
 
 export function sortCopyTradeTradersForDisplay(
@@ -85,8 +125,6 @@ export function sortCopyTradeTradersForDisplay(
   const byRank = (a: CopyTradeTrader, b: CopyTradeTrader) =>
     a.computedRank - b.computedRank;
   const byScore = (a: CopyTradeTrader, b: CopyTradeTrader) => b.score - a.score;
-  const byMomentum = (a: CopyTradeTrader, b: CopyTradeTrader) =>
-    b.momentum - a.momentum;
   const byLastSeen = (a: CopyTradeTrader, b: CopyTradeTrader) =>
     b.lastSeenAt.localeCompare(a.lastSeenAt);
   const byHandle = (a: CopyTradeTrader, b: CopyTradeTrader) =>
@@ -105,11 +143,53 @@ export function sortCopyTradeTradersForDisplay(
     case COPYTRADE_SORT_BY.SCORE_ASC:
       out.sort((a, b) => byScore(b, a) || byRank(a, b) || byHandle(a, b));
       break;
-    case COPYTRADE_SORT_BY.MOMENTUM_DESC:
-      out.sort((a, b) => byMomentum(a, b) || byScore(a, b) || byRank(a, b));
+    case COPYTRADE_SORT_BY.ROI_DESC:
+      out.sort(
+        (a, b) =>
+          cmpNullableNumber(a.roiTotalPct, b.roiTotalPct, true) ||
+          byScore(a, b) ||
+          byRank(a, b),
+      );
       break;
-    case COPYTRADE_SORT_BY.MOMENTUM_ASC:
-      out.sort((a, b) => byMomentum(b, a) || byScore(a, b) || byRank(a, b));
+    case COPYTRADE_SORT_BY.ROI_ASC:
+      out.sort(
+        (a, b) =>
+          cmpNullableNumber(a.roiTotalPct, b.roiTotalPct, false) ||
+          byScore(a, b) ||
+          byRank(a, b),
+      );
+      break;
+    case COPYTRADE_SORT_BY.MAX_DRAWDOWN_DESC:
+      out.sort(
+        (a, b) =>
+          cmpNullableNumber(a.maxDrawdownPct, b.maxDrawdownPct, true) ||
+          byScore(a, b) ||
+          byRank(a, b),
+      );
+      break;
+    case COPYTRADE_SORT_BY.MAX_DRAWDOWN_ASC:
+      out.sort(
+        (a, b) =>
+          cmpNullableNumber(a.maxDrawdownPct, b.maxDrawdownPct, false) ||
+          byScore(a, b) ||
+          byRank(a, b),
+      );
+      break;
+    case COPYTRADE_SORT_BY.MONTHS_ACTIVE_DESC:
+      out.sort(
+        (a, b) =>
+          cmpNullableNumber(a.monthsActive, b.monthsActive, true) ||
+          byScore(a, b) ||
+          byRank(a, b),
+      );
+      break;
+    case COPYTRADE_SORT_BY.MONTHS_ACTIVE_ASC:
+      out.sort(
+        (a, b) =>
+          cmpNullableNumber(a.monthsActive, b.monthsActive, false) ||
+          byScore(a, b) ||
+          byRank(a, b),
+      );
       break;
     case COPYTRADE_SORT_BY.LAST_SEEN_DESC:
       out.sort((a, b) => byLastSeen(a, b) || byRank(a, b) || byHandle(a, b));

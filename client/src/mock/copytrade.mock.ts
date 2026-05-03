@@ -13,6 +13,8 @@ function makeMockTrader(index: number): CopyTradeTraderApiDto {
   const computedRank = index + 1;
 
   const riskLevels = ["Low", "Medium", "High"] as const;
+  const capacities = ["Low", "Medium", "High"] as const;
+  const profiles = ["Swing", "Position", "Scalp", "Balanced"] as const;
 
   return {
     trader_id: `T${String(computedRank).padStart(4, "0")}`,
@@ -23,10 +25,16 @@ function makeMockTrader(index: number): CopyTradeTraderApiDto {
     signal_state: signal,
     confidence_band: confidence,
     risk_level: riskLevels[index % riskLevels.length],
+    capacity_flag: capacities[index % capacities.length],
+    profile_tag: profiles[index % profiles.length],
     ema_score: Math.max(0, Math.min(100, 96 - index * 0.45)),
     score_momentum: Number((((index % 9) - 4) * 0.42).toFixed(2)),
     lifecycle_state: lifecycle,
     last_seen_at: new Date(Date.now() - index * 21 * 60_000).toISOString(),
+    roi_total_pct: Number((8 + index * 0.35).toFixed(2)),
+    max_drawdown_pct: Number((3.5 + (index % 12) * 0.4).toFixed(2)),
+    months_active: 3 + (index % 40),
+    total_trades: 40 + index * 7,
   };
 }
 

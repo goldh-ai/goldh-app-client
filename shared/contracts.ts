@@ -1166,8 +1166,12 @@ export const copyTradeSortByApiSchema = z.enum([
   "rank_asc",
   "score_desc",
   "score_asc",
-  "momentum_desc",
-  "momentum_asc",
+  "roi_desc",
+  "roi_asc",
+  "max_drawdown_desc",
+  "max_drawdown_asc",
+  "months_active_desc",
+  "months_active_asc",
   "last_seen_desc",
   "last_seen_asc",
 ]);
@@ -1303,6 +1307,10 @@ export const copyTradeTraderSchema = z.object({
   confidenceBand: copyTradeConfidenceBandSchema,
   score: z.number().min(0).max(100),
   momentum: z.number(),
+  roiTotalPct: z.number().nullable(),
+  maxDrawdownPct: z.number().nullable(),
+  monthsActive: z.number().int().nullable(),
+  totalTrades: z.number().int().nullable(),
   profileTag: z.string().nullable(),
   capacityFlag: copyTradeCapacityFlagSchema.nullable(),
   lifecycleState: copyTradeLifecycleStateSchema,
@@ -1319,9 +1327,51 @@ function pickIsoTimestamp(
   return new Date(0).toISOString();
 }
 
+function coalesceFiniteNumber(...vals: unknown[]): number | null {
+  for (const v of vals) {
+    if (typeof v === "number" && Number.isFinite(v)) return v;
+    if (typeof v === "string" && v.trim().length > 0) {
+      const n = Number(v);
+      if (Number.isFinite(n)) return n;
+    }
+  }
+  return null;
+}
+
+function coalesceIntMetric(...vals: unknown[]): number | null {
+  const n = coalesceFiniteNumber(...vals);
+  return n === null ? null : Math.trunc(n);
+}
+
 export function mapCopyTradeTraderFromApiDto(
   dto: CopyTradeTraderApiDto,
 ): CopyTradeTrader {
+  const rm =
+    dto.raw_metrics && typeof dto.raw_metrics === "object"
+      ? (dto.raw_metrics as Record<string, unknown>)
+      : undefined;
+
+  const roiTotalPct = coalesceFiniteNumber(
+    dto.roi_total_pct,
+    rm?.roi_total_pct,
+    rm?.roiTotalPct,
+  );
+  const maxDrawdownPct = coalesceFiniteNumber(
+    dto.max_drawdown_pct,
+    rm?.max_drawdown_pct,
+    rm?.maxDrawdownPct,
+  );
+  const monthsActive = coalesceIntMetric(
+    dto.months_active,
+    rm?.months_active,
+    rm?.monthsActive,
+  );
+  const totalTrades = coalesceIntMetric(
+    dto.total_trades,
+    rm?.total_trades,
+    rm?.totalTrades,
+  );
+
   return {
     traderId: dto.trader_id,
     handle: dto.handle,
@@ -1332,6 +1382,10 @@ export function mapCopyTradeTraderFromApiDto(
     confidenceBand: dto.confidence_band,
     score: dto.ema_score,
     momentum: dto.score_momentum,
+    roiTotalPct,
+    maxDrawdownPct,
+    monthsActive,
+    totalTrades,
     profileTag: dto.profile_tag ?? null,
     capacityFlag: dto.capacity_flag ?? null,
     lifecycleState: dto.lifecycle_state,
