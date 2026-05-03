@@ -21,6 +21,7 @@ import {
 import { createCopyTradeColumns } from "../lib/createCopyTradeColumns";
 import {
   COPYTRADE_DEFAULT_SORT_BY,
+  COPYTRADE_SORT_BY,
   copyTradeTableColumnIdForSortBy,
 } from "../lib/copyTradeSort";
 import { fetchCopyTradeLeaderboard } from "../lib/copyTradeApi";
@@ -46,6 +47,16 @@ export default function CopyTradeLeaderboardPage() {
   const [signal, setSignal] = useState<string>("all");
   const [capacity, setCapacity] = useState<string>("all");
   const [sortBy, setSortBy] = useState(COPYTRADE_DEFAULT_SORT_BY);
+
+  /** Rank column removed from UI — migrate legacy `rank_*` sort without breaking TanStack header sync. */
+  useEffect(() => {
+    if (
+      sortBy === COPYTRADE_SORT_BY.RANK_ASC ||
+      sortBy === COPYTRADE_SORT_BY.RANK_DESC
+    ) {
+      setSortBy(COPYTRADE_DEFAULT_SORT_BY);
+    }
+  }, [sortBy]);
   const [perPage, setPerPage] = useState<number>(COPYTRADE_API_PAGE_SIZE);
   const [pageIndex, setPageIndex] = useState(0);
   const [cursorByPage, setCursorByPage] = useState<Record<number, string | null>>({
@@ -453,8 +464,8 @@ export default function CopyTradeLeaderboardPage() {
                 pageSize: perPage,
                 resetKey: `${grade}|${confidence}|${signal}|${capacity}|${debouncedTraderSearch}|${sortBy}|${perPage}`,
               }}
-              tableMinWidthClassName="min-w-[1320px] relative"
-              skeletonColumnCount={14}
+              tableMinWidthClassName="min-w-[1040px] relative"
+              skeletonColumnCount={12}
               emptyTitle="No traders found"
               emptyDescription="Refine filters or clear to show all leaderboard rows."
               onClearFilters={clearFilters}

@@ -15,8 +15,9 @@ export const COPYTRADE_SORT_BY = {
   LAST_SEEN_ASC: "last_seen_asc",
 } as const satisfies Record<string, CopyTradeSortByApi>;
 
+/** Default after Rank column was removed from the leaderboard UI. */
 export const COPYTRADE_DEFAULT_SORT_BY: CopyTradeSortByApi =
-  COPYTRADE_SORT_BY.RANK_ASC;
+  COPYTRADE_SORT_BY.SCORE_DESC;
 
 export const COPYTRADE_SORTABLE_COLUMN_ID = {
   RANK: "computedRank",
