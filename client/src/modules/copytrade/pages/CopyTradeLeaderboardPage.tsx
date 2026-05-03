@@ -213,6 +213,12 @@ export default function CopyTradeLeaderboardPage() {
     setIsDetailOpen(false);
   }, []);
 
+  /** Leaderboard matches Arbitrage: hover-only rows — no persisted “last opened” highlight (also avoids sticky-column layering bugs). */
+  const closeDetailPanel = useCallback(() => {
+    setIsDetailOpen(false);
+    setSelectedTraderId(null);
+  }, []);
+
   const sorting = useMemo(
     (): SortingState => [
       {
@@ -236,9 +242,8 @@ export default function CopyTradeLeaderboardPage() {
           setSelectedTraderId(traderId);
           setIsDetailOpen(true);
         },
-        selectedTraderId,
       }),
-    [sortBy, selectedTraderId],
+    [sortBy],
   );
 
   const handlePerPageChange = useCallback((next: number) => {
@@ -444,17 +449,11 @@ export default function CopyTradeLeaderboardPage() {
                 setSelectedTraderId(row.traderId);
                 setIsDetailOpen(true);
               }}
-              getRowClassName={(row) =>
-                row.traderId === selectedTraderId
-                  ? // `border-b` on `<td>` sits on the row edge and hides an inset ring bottom; drop it so the frame reads on all sides.
-                  "relative z-[1] bg-primary/10 ring-1 ring-inset ring-primary/60 [&>td]:border-b-transparent"
-                  : undefined
-              }
               pagination={{
                 pageSize: perPage,
                 resetKey: `${grade}|${confidence}|${signal}|${capacity}|${debouncedTraderSearch}|${sortBy}|${perPage}`,
               }}
-              tableMinWidthClassName="min-w-[1320px] relative [&_th]:px-3 [&_td]:px-3 [&_th:last-child]:pr-8 [&_td:last-child]:pr-8"
+              tableMinWidthClassName="min-w-[1320px] relative"
               skeletonColumnCount={14}
               emptyTitle="No traders found"
               emptyDescription="Refine filters or clear to show all leaderboard rows."
@@ -486,7 +485,7 @@ export default function CopyTradeLeaderboardPage() {
           <>
             <div
               className="fixed inset-0 z-40 bg-black/45 backdrop-blur-sm"
-              onClick={() => setIsDetailOpen(false)}
+              onClick={closeDetailPanel}
               aria-hidden
             />
             <div className="fixed inset-y-0 right-0 z-50 w-full max-w-[min(100vw,1080px)] border-l border-border bg-background shadow-2xl md:w-[min(92vw,920px)] xl:w-[min(88vw,1000px)]">
@@ -497,7 +496,7 @@ export default function CopyTradeLeaderboardPage() {
                 isError={isDetailError}
                 error={detailError}
                 onRetry={() => refetchDetail()}
-                onClose={() => setIsDetailOpen(false)}
+                onClose={closeDetailPanel}
                 isHistoryFetching={isDetailHistoryFetching && !isDetailLoading}
                 hasHistoryError30={Boolean(history30Error)}
                 hasHistoryError90={Boolean(history90Error)}

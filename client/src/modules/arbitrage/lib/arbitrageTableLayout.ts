@@ -1,17 +1,17 @@
 import { cn } from "@/lib/utils";
-import { institutionalTableChromeSurfaceClass } from "@/lib/institutionalDataChrome";
+import {
+  institutionalTableStickyFirstCellClass,
+  institutionalTableStickyFirstHeadInsetClass,
+} from "@/lib/institutionalDataChrome";
 
 export const ARBITRAGE_TABLE_MIN_WIDTH_CLASS = "min-w-[1100px] relative";
 
-export const arbitrageStickyPairHeaderClass = cn(
-  "left-0 z-[41] border-r border-[#222]/50",
-  institutionalTableChromeSurfaceClass,
-);
+export const arbitrageStickyPairHeaderClass =
+  institutionalTableStickyFirstHeadInsetClass;
 
-/** Sticky PAIR column — same base/hover as Pulse first column (`PulseAssetTable`). */
-export const arbitrageStickyPairCellClass = cn(
-  "sticky left-0 z-10 border-r border-[#222]/50 bg-[#0a0a0a] group-hover:bg-[#121212]",
-);
+/** Sticky PAIR column — shared institutional sticky first column (BaseTable row hover #161616). */
+export const arbitrageStickyPairCellClass =
+  institutionalTableStickyFirstCellClass;
 
 const nw = "whitespace-nowrap";
 

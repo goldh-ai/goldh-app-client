@@ -9,8 +9,9 @@ import {
   institutionalTableCellInnerRightClass,
   institutionalTableCellMonoClass,
   institutionalTableEntityTextClass,
-  institutionalTableCellTextClass,
+  institutionalTableStickyFirstCellClass,
 } from "@/lib/institutionalDataChrome";
+import { arbitrageColumnLayout } from "@/modules/arbitrage/lib/arbitrageTableLayout";
 import { cn } from "@/lib/utils";
 import {
   COPYTRADE_SORT_BY,
@@ -37,6 +38,37 @@ import {
 } from "./copyTradeFormat";
 
 const columnHelper = createColumnHelper<CopyTradeTrader>();
+
+/**
+ * Same widths as Arbitrage “Pair” (`8.5rem` / `9.5rem`). Cell omits `whitespace-nowrap` so handle + ID stack;
+ * header reuses Arbitrage pair thead classes.
+ */
+const copyTradeStickyNameMeta = {
+  arbHeadClass: cn(arbitrageColumnLayout.pair.head, "overflow-hidden"),
+  arbCellClass: cn(
+    institutionalTableStickyFirstCellClass,
+    "min-w-[8.5rem] w-[8.5rem] sm:min-w-[9.5rem] sm:w-[9.5rem]",
+    "overflow-hidden",
+    "shadow-[6px_0_18px_-4px_rgba(0,0,0,0.92)]",
+  ),
+} as const;
+
+/** Handle + trader ID (two rows) inside Arbitrage-sized sticky lane; truncates when long. */
+function CopyTradeNameCell({ handle, traderId }: { handle: string; traderId: string }) {
+  return (
+    <div className="flex min-h-10 w-full min-w-0 flex-col items-start justify-center gap-0.5 overflow-hidden py-0.5">
+      <p className={cn("w-full min-w-0 truncate leading-tight", institutionalTableEntityTextClass)} title={handle}>
+        {handle}
+      </p>
+      <span
+        className="inline-flex max-w-full min-w-0 truncate rounded-sm border border-primary/30 bg-primary/10 px-1 py-0.5 font-mono text-xs uppercase tracking-wide text-primary/90"
+        title={traderId}
+      >
+        {traderId}
+      </span>
+    </div>
+  );
+}
 
 type HeaderAlign = "left" | "center" | "right";
 
@@ -139,34 +171,20 @@ export type CreateCopyTradeColumnsOptions = {
   sortBy: CopyTradeSortByApi;
   onSortByChange: (next: CopyTradeSortByApi) => void;
   onSelectTrader?: (traderId: string) => void;
-  selectedTraderId?: string | null;
 };
 
 export function createCopyTradeColumns(
   options: CreateCopyTradeColumnsOptions,
 ): ColumnDef<CopyTradeTrader>[] {
-  const { sortBy, onSortByChange, onSelectTrader, selectedTraderId } = options;
+  const { sortBy, onSortByChange, onSelectTrader } = options;
 
   return [
     columnHelper.display({
       id: "name",
-      header: () => <StaticHeader label="Name" />,
+      header: () => <StaticHeader label="Name" align="left" />,
+      meta: copyTradeStickyNameMeta,
       cell: ({ row }) => (
-        <button
-          type="button"
-          onClick={() => onSelectTrader?.(row.original.traderId)}
-          title={`${row.original.handle} · ${row.original.traderId}`}
-          className={cn(
-            "flex min-h-10 w-full min-w-[7.25rem] flex-col items-start justify-center rounded-md px-1 py-1 text-left outline-none transition focus-visible:ring-1 focus-visible:ring-primary/60",
-            selectedTraderId === row.original.traderId &&
-            "bg-primary/12",
-          )}
-        >
-          <p className={cn("truncate leading-tight", institutionalTableEntityTextClass)}>{row.original.handle}</p>
-          <p className="mt-0.5 inline-flex rounded-sm border border-primary/30 bg-primary/10 px-1 py-0.5 font-mono text-xs uppercase tracking-wide text-primary/90">
-            {row.original.traderId}
-          </p>
-        </button>
+        <CopyTradeNameCell handle={row.original.handle} traderId={row.original.traderId} />
       ),
     }),
     columnHelper.accessor("computedRank", {
@@ -256,58 +274,6 @@ export function createCopyTradeColumns(
         );
       },
       meta: { arbHeadClass: "min-w-[4.75rem]", arbCellClass: "min-w-[4.75rem]" },
-    }),
-    columnHelper.accessor("monthsActive", {
-      id: "monthsActive",
-      header: ({ column }) => (
-        <ServerSortHeader
-          label="Months"
-          column={column}
-          onSortByChange={onSortByChange}
-          sortBy={sortBy}
-          sortAsc={COPYTRADE_SORT_BY.MONTHS_ACTIVE_ASC}
-          sortDesc={COPYTRADE_SORT_BY.MONTHS_ACTIVE_DESC}
-          columnId="monthsActive"
-          align="center"
-        />
-      ),
-      enableSorting: true,
-      cell: (info) => {
-        const v = info.getValue();
-        return (
-          <div className={institutionalTableCellInnerCenterClass}>
-            <p
-              className={cn(
-                institutionalTableCellMonoClass,
-                copyTradeMonthsActiveTextClass(v),
-              )}
-            >
-              {v === null ? "—" : String(v)}
-            </p>
-          </div>
-        );
-      },
-      meta: { arbHeadClass: "min-w-[4rem]", arbCellClass: "min-w-[4rem]" },
-    }),
-    columnHelper.accessor("totalTrades", {
-      header: () => <StaticHeader label="Trades" align="center" />,
-      enableSorting: false,
-      cell: (info) => {
-        const v = info.getValue();
-        return (
-          <div className={institutionalTableCellInnerCenterClass}>
-            <p
-              className={cn(
-                institutionalTableCellMonoClass,
-                copyTradeTotalTradesTextClass(v),
-              )}
-            >
-              {v === null ? "—" : String(v)}
-            </p>
-          </div>
-        );
-      },
-      meta: { arbHeadClass: "min-w-[4rem]", arbCellClass: "min-w-[4rem]" },
     }),
     columnHelper.accessor("score", {
       header: ({ column }) => (
@@ -402,6 +368,58 @@ export function createCopyTradeColumns(
         );
       },
       meta: { arbHeadClass: "min-w-[5.25rem]", arbCellClass: "min-w-[5.25rem]" },
+    }),
+    columnHelper.accessor("monthsActive", {
+      id: "monthsActive",
+      header: ({ column }) => (
+        <ServerSortHeader
+          label="Months"
+          column={column}
+          onSortByChange={onSortByChange}
+          sortBy={sortBy}
+          sortAsc={COPYTRADE_SORT_BY.MONTHS_ACTIVE_ASC}
+          sortDesc={COPYTRADE_SORT_BY.MONTHS_ACTIVE_DESC}
+          columnId="monthsActive"
+          align="center"
+        />
+      ),
+      enableSorting: true,
+      cell: (info) => {
+        const v = info.getValue();
+        return (
+          <div className={institutionalTableCellInnerCenterClass}>
+            <p
+              className={cn(
+                institutionalTableCellMonoClass,
+                copyTradeMonthsActiveTextClass(v),
+              )}
+            >
+              {v === null ? "—" : String(v)}
+            </p>
+          </div>
+        );
+      },
+      meta: { arbHeadClass: "min-w-[4rem]", arbCellClass: "min-w-[4rem]" },
+    }),
+    columnHelper.accessor("totalTrades", {
+      header: () => <StaticHeader label="Trades" align="center" />,
+      enableSorting: false,
+      cell: (info) => {
+        const v = info.getValue();
+        return (
+          <div className={institutionalTableCellInnerCenterClass}>
+            <p
+              className={cn(
+                institutionalTableCellMonoClass,
+                copyTradeTotalTradesTextClass(v),
+              )}
+            >
+              {v === null ? "—" : String(v)}
+            </p>
+          </div>
+        );
+      },
+      meta: { arbHeadClass: "min-w-[4rem]", arbCellClass: "min-w-[4rem]" },
     }),
     columnHelper.accessor("capacityFlag", {
       header: () => <StaticHeader label="Capacity" align="center" />,

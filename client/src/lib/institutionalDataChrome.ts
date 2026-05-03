@@ -77,6 +77,16 @@ export const institutionalTableSortHeaderButtonClass =
 /** Table / shell chrome surface (sticky thead, footer strip, loading thead). */
 export const institutionalTableChromeSurfaceClass = "bg-[#0c0c0c]";
 
+export const institutionalTableStickyFirstHeadInsetClass = cn(
+  "left-0 z-[41] border-r border-[#222]/50",
+  institutionalTableChromeSurfaceClass,
+);
+
+/** Pair with `<tr className="group/table-row">` (see BaseTable). Matches row `hover:bg-[#161616]` under horizontal scroll. `z-20` keeps peers from painting over the lane when `overflow-x-auto` scrolls (Pulse-style). */
+export const institutionalTableStickyFirstCellClass = cn(
+  "sticky left-0 z-20 isolate border-r border-[#222]/50 bg-[#0a0a0a] group-hover/table-row:bg-[#161616]",
+);
+
 /** Apply to each `<th>` (not `<thead>`) — `border-collapse` breaks sticky headers. */
 export const institutionalTableHeadStickyClass = cn(
   "sticky top-0 z-30 border-b border-[#222]",

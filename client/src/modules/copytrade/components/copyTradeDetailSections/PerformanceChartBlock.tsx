@@ -56,7 +56,7 @@ export function PerformanceChartBlock({
 
   if (isLoading && points.length < 2) {
     return (
-      <div className="flex min-h-0 w-full flex-1 flex-col">
+      <div className="flex min-h-0 w-full flex-1 flex-col gap-y-3">
         <div className="min-h-0 flex-1" aria-hidden />
         <Skeleton className={cn(chartShell, "animate-pulse bg-muted/40")} />
       </div>
@@ -65,7 +65,7 @@ export function PerformanceChartBlock({
 
   if (hasError) {
     return (
-      <div className="flex min-h-0 w-full flex-1 flex-col">
+      <div className="flex min-h-0 w-full flex-1 flex-col gap-y-3">
         <div className="min-h-0 flex-1" aria-hidden />
         <div
           className={cn(
@@ -83,7 +83,7 @@ export function PerformanceChartBlock({
 
   if (points.length < 2) {
     return (
-      <div className="flex min-h-0 w-full flex-1 flex-col">
+      <div className="flex min-h-0 w-full flex-1 flex-col gap-y-3">
         <div className="min-h-0 flex-1" aria-hidden />
         <div
           className={cn(chartShell, "flex items-center justify-center border border-border/60 bg-muted/10")}
@@ -109,8 +109,8 @@ export function PerformanceChartBlock({
       : `${stats.delta > 0 ? "+" : ""}${stats.delta.toFixed(1)}%`;
 
   return (
-    <div className="flex min-h-0 w-full flex-1 flex-col">
-      <div className="flex w-full shrink-0 flex-wrap items-center justify-between gap-x-3 gap-y-1">
+    <div className="flex min-h-0 w-full flex-1 flex-col gap-y-3">
+      <div className="flex w-full shrink-0 flex-wrap items-center justify-between gap-x-3 gap-y-1 pb-0.5">
         <span className="text-xs font-black uppercase tracking-wider text-primary/95">
           Cumulative ROI
         </span>
@@ -131,7 +131,7 @@ export function PerformanceChartBlock({
         <ResponsiveContainer width="100%" height="100%">
           <AreaChart
             data={points}
-            margin={{ top: 16, right: 12, left: 2, bottom: 8 }}
+            margin={{ top: 22, right: 12, left: 2, bottom: 8 }}
           >
             <defs>
               <linearGradient id="copytradeRoiTrendFill" x1="0" y1="0" x2="0" y2="1">

@@ -370,7 +370,8 @@ function BaseTableInner<TData>({
               <tr
                 key={row.id}
                 className={cn(
-                  "group",
+                  /* Named group avoids nested `group` (e.g. Radix tooltips) stealing plain `group-hover` on sticky cells. */
+                  "group group/table-row",
                   institutionalTableDataRowClass,
                   onRowClick && "cursor-pointer",
                   getRowClassName?.(row.original),
