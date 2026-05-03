@@ -10,7 +10,6 @@ import {
   institutionalTableCellInnerLeftClass,
   institutionalTableCellInnerRightClass,
   institutionalTableCellMonoClass,
-  institutionalTableCellMonoStrongClass,
   institutionalTableCellTertiaryClass,
   institutionalTableCellTextClass,
   institutionalTableEmptyGlyphClass,
@@ -26,12 +25,14 @@ import {
 import { ARBITRAGE_TREND_SPARKLINE } from "./arbitrageConstants";
 import {
   arbitrageNetSpreadToneClass,
-  arbitrageScoreBarPct,
   fmtArbitragePct,
   fmtArbitragePriceUsd,
   fmtArbitrageUpdated,
   fmtArbitrageUsd,
 } from "./arbitrageFormat";
+import { InstitutionalScoreCell as ArbitrageScoreCell } from "@/components/shared/InstitutionalScoreCell";
+
+export { ArbitrageScoreCell };
 
 const rowInner = {
   left: institutionalTableCellInnerLeftClass,
@@ -105,20 +106,6 @@ export function ArbitrageUsdCell({ usd, align = "left" }: { usd: number; align?:
       <span className={cn("whitespace-nowrap", institutionalTableCellMonoClass)}>
         {fmtArbitrageUsd(usd)}
       </span>
-    </div>
-  );
-}
-
-export function ArbitrageScoreCell({ score }: { score: number }) {
-  const widthPct = arbitrageScoreBarPct(score);
-  return (
-    <div className={rowInner.center}>
-      <div className="flex min-w-[5.5rem] max-w-[6.5rem] items-center gap-2">
-        <span className={cn("shrink-0", institutionalTableCellMonoStrongClass)}>{score}</span>
-        <div className="h-1.5 min-w-0 flex-1 overflow-hidden rounded-full bg-secondary">
-          <div className="h-full rounded-full bg-primary/85" style={{ width: `${widthPct}%` }} />
-        </div>
-      </div>
     </div>
   );
 }

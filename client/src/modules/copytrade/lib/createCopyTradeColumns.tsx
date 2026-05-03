@@ -23,8 +23,9 @@ import {
   CopyTradeGradeBadge,
   CopyTradeSignalBadge,
 } from "./copyTradeBadges";
+import { InstitutionalScoreCell } from "@/components/shared/InstitutionalScoreCell";
 import { CopyTradeRecommendedActionBadge } from "../components/CopyTradeRecommendedActionBadge";
-import { fmtCopyTradeMomentum, fmtCopyTradeScore } from "./copyTradeFormat";
+import { fmtCopyTradeMomentum } from "./copyTradeFormat";
 
 const columnHelper = createColumnHelper<CopyTradeTrader>();
 
@@ -195,11 +196,9 @@ export function createCopyTradeColumns(
       ),
       enableSorting: true,
       cell: (info) => (
-        <div className={institutionalTableCellInnerCenterClass}>
-          <p className={institutionalTableCellMonoClass}>{fmtCopyTradeScore(info.getValue())}</p>
-        </div>
+        <InstitutionalScoreCell score={info.getValue()} />
       ),
-      meta: { arbHeadClass: "min-w-[4.5rem]", arbCellClass: "min-w-[4.5rem]" },
+      meta: { arbHeadClass: "min-w-[6.75rem]", arbCellClass: "min-w-[6.75rem]" },
     }),
     columnHelper.accessor("grade", {
       header: () => <StaticHeader label="Grade" align="center" />,

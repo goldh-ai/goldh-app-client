@@ -1,5 +1,6 @@
+/** Matches institutional score display (same numeric string as `InstitutionalScoreCell`). */
 export function fmtCopyTradeScore(value: number): string {
-  return value.toFixed(1);
+  return String(value);
 }
 
 export function fmtCopyTradeMomentum(value: number): string {

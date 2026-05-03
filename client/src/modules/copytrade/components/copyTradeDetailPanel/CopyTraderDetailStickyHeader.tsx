@@ -1,3 +1,4 @@
+import type { ReactNode } from "react";
 import { ShieldAlert } from "lucide-react";
 import type {
   CopyTradeCapacityFlag,
@@ -13,11 +14,8 @@ import {
   TooltipTrigger,
 } from "@/components/ui/tooltip";
 import { cn } from "@/lib/utils";
-import {
-  fmtCopyTradeMomentum,
-  fmtCopyTradeScore,
-  fmtCopyTradeUpdated,
-} from "../../lib/copyTradeFormat";
+import { InstitutionalScoreCell } from "@/components/shared/InstitutionalScoreCell";
+import { fmtCopyTradeMomentum, fmtCopyTradeUpdated } from "../../lib/copyTradeFormat";
 import type { CopyTradeTraderDetail } from "../../lib/copyTradeDetail";
 import {
   CopyTradeCapacityBadge,
@@ -89,15 +87,16 @@ const actionTone: Record<
   },
 };
 
+const metricStripValueClass =
+  "font-mono text-base font-bold tabular-nums leading-none text-foreground";
+
 function MetricCell({
   label,
-  value,
-  tone,
+  children,
   className,
 }: {
   label: string;
-  value: string;
-  tone?: string;
+  children: ReactNode;
   className?: string;
 }) {
   return (
@@ -105,14 +104,7 @@ function MetricCell({
       <span className="text-[0.65rem] font-bold uppercase tracking-[0.18em] text-muted-foreground">
         {label}
       </span>
-      <span
-        className={cn(
-          "mt-1 font-mono text-base font-bold tabular-nums leading-none text-foreground",
-          tone,
-        )}
-      >
-        {value}
-      </span>
+      <div className="mt-1 min-w-0 w-full">{children}</div>
     </div>
   );
 }
@@ -273,19 +265,18 @@ export function CopyTraderDetailStickyHeader({
       )}
 
       {/* Compact metric strip — single row, no triple-stacked corner. */}
-      <div className="mt-3 grid grid-cols-3 divide-x divide-border/45 overflow-hidden rounded-xl bg-muted/10 py-1 ring-1 ring-inset ring-border/35">
-        <MetricCell
-          className="px-3 py-2.5"
-          label="Rank"
-          value={`#${computedRank}`}
-        />
-        <MetricCell className="px-3 py-2.5" label="Score" value={fmtCopyTradeScore(score)} />
-        <MetricCell
-          className="px-3 py-2.5"
-          label="Momentum"
-          value={fmtCopyTradeMomentum(momentum)}
-          tone={momentumTone}
-        />
+      <div className="mt-3 grid grid-cols-3 items-center divide-x divide-border/45 overflow-hidden rounded-xl bg-muted/10 py-1 ring-1 ring-inset ring-border/35">
+        <MetricCell className="px-3 py-2.5" label="Rank">
+          <span className={metricStripValueClass}>{`#${computedRank}`}</span>
+        </MetricCell>
+        <MetricCell className="px-3 py-2.5" label="Score">
+          <InstitutionalScoreCell score={score} align="start" />
+        </MetricCell>
+        <MetricCell className="px-3 py-2.5" label="Momentum">
+          <span className={cn(metricStripValueClass, momentumTone)}>
+            {fmtCopyTradeMomentum(momentum)}
+          </span>
+        </MetricCell>
       </div>
 
       {scoreCapApplied ? (

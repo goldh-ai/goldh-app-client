@@ -34,7 +34,3 @@ export function arbitrageNetSpreadToneClass(netPct: number): string {
   if (netPct > 0.05) return "text-muted-foreground";
   return "text-muted-foreground/70";
 }
-
-export function arbitrageScoreBarPct(score: number): number {
-  return Math.min(100, Math.max(0, score));
-}
