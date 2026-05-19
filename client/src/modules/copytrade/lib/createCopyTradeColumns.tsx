@@ -437,7 +437,7 @@ export function createCopyTradeColumns(
               className={cn(
                 institutionalTableCellMonoClass,
                 copyTradeLastSeenTextClass(iso),
-                "text-right text-xs",
+                "whitespace-nowrap text-right text-[11px] leading-none sm:text-xs",
               )}
               title={iso}
             >
@@ -446,7 +446,7 @@ export function createCopyTradeColumns(
           </div>
         );
       },
-      meta: { arbHeadClass: "min-w-[6.25rem]", arbCellClass: "min-w-[6.25rem]" },
+      meta: { arbHeadClass: "min-w-[7.75rem]", arbCellClass: "min-w-[7.75rem]" },
     }),
     columnHelper.display({
       id: "recommendedAction",

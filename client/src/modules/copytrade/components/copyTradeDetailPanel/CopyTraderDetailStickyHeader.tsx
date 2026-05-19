@@ -265,7 +265,7 @@ export function CopyTraderDetailStickyHeader({
       )}
 
       {/* Compact metric strip — single row, no triple-stacked corner. */}
-      <div className="mt-3 grid grid-cols-3 items-center divide-x divide-border/45 overflow-hidden rounded-xl bg-muted/10 py-1 ring-1 ring-inset ring-border/35">
+      <div className="mt-3 grid grid-cols-3 items-center divide-x divide-border/60 overflow-hidden rounded-xl border border-border/55 bg-muted/25 py-1 shadow-sm ring-1 ring-inset ring-border/45">
         <MetricCell className="px-3 py-2.5" label="Rank">
           <span className={metricStripValueClass}>{`#${computedRank}`}</span>
         </MetricCell>
